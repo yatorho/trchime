@@ -9,7 +9,7 @@ x = tce.Variable([10., -10., -5., 6., 3., 1.])
 c = tce.Constant([1., 2., -7., 6., tce.pi, -tce.e])
 
 
-# minimize (x - c) ** 2 by 100 iterations
+# minimize (x - c) ** 2 by 30 iterations
 for i in range(30):
 
     y = (x - c) ** 2
