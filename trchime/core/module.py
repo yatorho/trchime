@@ -10,10 +10,9 @@ from ._func import _log
 from .tensor import Tensor
 from .parameter import Parameter
 from ..call import ProgressBar
-from typing import Union, List, Tuple
+from typing import List, Tuple
 # noinspection PyProtectedMember
 from .gather import _ensure_tensor
-from .dtype import float32
 
 
 class _Fitter:
@@ -411,8 +410,7 @@ class GradientTape:
 
     def _zero_all_grad(self, fn: Tensor):
         if self.isrun:
-            """
-            """
+            raise NotImplementedError
 
 
 from ..nn.optim import SGD, SGDM, RMSprop, Adagrad, Adam
