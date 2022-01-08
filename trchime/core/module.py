@@ -142,15 +142,16 @@ class _Fitter:
                         a1 = y_train_hat.argmax(axis = 1)
                         b1 = self.y_data.argmax(axis = 1)
                         c1 = (1 * (b1 == a1)).mean()
-                        print('\repoch:', epoch, "loss:", epoch_loss.astype(float32), "acc_tr:", c1.data.astype(float32),
-                              'acc:',
-                              c.data.astype(float32))
+                        print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
+                              " |  Accuray:  %4.2f" % (c.data * 100),
+                              " |  Acc_tr: %4.2f" % (c1.data * 100))
                     elif show_acc:
-                        print('\repoch:', epoch, "loss:", epoch_loss.astype(float32), "acc:", c.data.astype(float32))
+                        print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
+                              " |  Accuray:  %4.2f" % (c.data * 100))
                     if (not show_acc) and (not show_acc_tr):
-                        print('\repoch:', epoch, "loss:", epoch_loss.astype(float32))
+                        print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss)
                 else:
-                    print('\repoch:', epoch, "loss:", epoch_loss.astype(float32))
+                    print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss)
 
     def _categorical_cross_entropy_loss(self, model: 'Module', show_acc_tr: bool, show_acc, freq) -> 'None':
         """
@@ -195,17 +196,16 @@ class _Fitter:
                         a1 = y_train_hat.argmax(axis = 1)
                         b1 = self.y_data.argmax(axis = 1)
                         c1 = (1 * (b1 == a1)).mean()
-                        print('\repoch:', epoch, "loss:", epoch_loss.astype(float32), "acc_tr:", c1.data.astype(float32),
-                              'acc:',
-                              c.data.astype(float32))
+                        print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
+                              " |  Accuray:  %4.2f" % (c.data * 100),
+                              " |  Acc_tr: %4.2f" % (c1.data * 100))
                     elif show_acc:
-
-                        print('\repoch:', epoch, "loss:", epoch_loss.astype(float32), "acc:", c.data.astype(float32))
+                        print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
+                              " |  Accuray:  %4.2f" % (c.data * 100))
                     if (not show_acc) and (not show_acc_tr):
-                        print('\repoch:', epoch, "loss:", epoch_loss.astype(float32))
+                        print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss)
                 else:
-                    print('\repoch:', epoch, "loss:", epoch_loss.astype(float32))
-
+                    print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss)
 
     def fit(self, model: 'Module', compile):
         from ..nn import SGD_OPTIMIZER, SGDM_OPTIMIZER, ADAGRAD_OPTIMIZER, ADAM_OPTIMIZER, RMSPROP_OPTIMIZER
@@ -236,7 +236,7 @@ class _Fitter:
 
         elif loss_f == CATEGORYLOSS:
             self.loss = 'categorical_cross_entropy_loss'
-            self._categorical_cross_entropy_loss(model, self.show_acc_tr, self.show_acc,self.validation_freq)
+            self._categorical_cross_entropy_loss(model, self.show_acc_tr, self.show_acc, self.validation_freq)
 
 
 class Module:
@@ -416,5 +416,3 @@ class GradientTape:
 
 
 from ..nn.optim import SGD, SGDM, RMSprop, Adagrad, Adam
-
-
