@@ -35,22 +35,6 @@ def tanh(t: 'Tensorable') -> 'Tensor':
                    requires_grad,
                    depends_on)
     """
-    # t = ensure_tensor(t)
-    # data = np.tanh(t.data)
-    # requires_grad = t.requires_grad
-    #
-    # if requires_grad:
-    #
-    #     def grad_fn(grad: np.ndarray) -> np.ndarray:
-    #         return grad * (1 - data * data)
-    #
-    #     depends_on = [Dependency(t, grad_fn)]
-    # else:
-    #     depends_on = []
-    #
-    # return Tensor(data,
-    #               requires_grad,
-    #               depends_on)
     t = _ensure_tensor(t)
 
     return _tanh(t = t)
@@ -67,23 +51,7 @@ def sin(t: 'Tensorable') -> 'Tensor':
                  requires_grad,
                  depends_on)
     """
-    # t = ensure_tensor(t)
-    #
-    # data = np.sin(t.data)
-    # requires_grad = t.requires_grad
-    #
-    # if requires_grad:
-    #
-    #     def grad_fn(grad: np.ndarray) -> np.ndarray:
-    #         return grad * np.cos(t.data)
-    #
-    #     depends_on = [Dependency(t, grad_fn)]
-    # else:
-    #     depends_on = []
-    #
-    # return Tensor(data,
-    #               requires_grad,
-    #               depends_on)
+
     t = _ensure_tensor(t)
 
     return _sin(t)
@@ -100,23 +68,6 @@ def cos(t: 'Tensorable') -> 'Tensor':
                  requires_grad,
                  depends_on)
     """
-    # t = ensure_tensor(t)
-    #
-    # data = np.cos(t.data)
-    # requires_grad = t.requires_grad
-    #
-    # if requires_grad:
-    #
-    #     def grad_fn(grad: np.ndarray) -> np.ndarray:
-    #         return - grad * np.sin(t.data)
-    #
-    #     depends_on = [Dependency(t, grad_fn)]
-    # else:
-    #     depends_on = []
-    #
-    # return Tensor(data,
-    #               requires_grad,
-    #               depends_on)
     t = _ensure_tensor(t)
 
     return _cos(t = t)
@@ -133,23 +84,6 @@ def tan(t: 'Tensorable') -> 'Tensor':
                  requires_grad,
                  depends_on)
     """
-    # t = ensure_tensor(t)
-    #
-    # data = np.tan(t.data)
-    # requires_grad = t.requires_grad
-    #
-    # if requires_grad:
-    #
-    #     def grad_fn(grad: np.ndarray) -> np.ndarray:
-    #         return grad / (np.cos(t.data) * np.cos(t.data))
-    #
-    #     depends_on = [Dependency(t, grad_fn)]
-    # else:
-    #     depends_on = []
-    #
-    # return Tensor(data,
-    #               requires_grad,
-    #               depends_on)
     t = _ensure_tensor(t)
 
     return _tan(t = t)
@@ -166,23 +100,6 @@ def exp(t: 'Tensorable') -> 'Tensor':
                  requires_grad,
                  depends_on)
     """
-    # t = ensure_tensor(t)
-    #
-    # data = np.exp(t.data)
-    # requires_grad = t.requires_grad
-    #
-    # if requires_grad:
-    #
-    #     def grad_fn(grad: np.ndarray) -> np.ndarray:
-    #         return grad * data
-    #
-    #     depends_on = [Dependency(t, grad_fn)]
-    # else:
-    #     depends_on = []
-    #
-    # return Tensor(data,
-    #               requires_grad,
-    #               depends_on)
     t = _ensure_tensor(t)
 
     return _exp(t = t)
@@ -199,23 +116,6 @@ def log(t: 'Tensorable') -> 'Tensor':
                  requires_grad,
                  depends_on)
     """
-    # t = ensure_tensor(t)
-    #
-    # data = np.log(t.data)
-    # requires_grad = t.requires_grad
-    #
-    # if requires_grad:
-    #
-    #     def grad_fn(grad: np.ndarray) -> np.ndarray:
-    #         return grad / t.data
-    #
-    #     depends_on = [Dependency(t, grad_fn)]
-    # else:
-    #     depends_on = []
-    #
-    # return Tensor(data,
-    #               requires_grad,
-    #               depends_on)
     t = _ensure_tensor(t)
 
     return _log(t = t)
@@ -233,23 +133,6 @@ def sigmoid(t: 'Tensorable') -> 'Tensor':
            requires_grad,
            depends_on)
     """
-    # t = ensure_tensor(t)
-    #
-    # data = 1 / (1 + np.exp(-t.data))
-    # requires_grad = t.requires_grad
-    #
-    # if requires_grad:
-    #
-    #     def grad_fn(grad: np.ndarray) -> np.ndarray:
-    #         return grad * data * (1 - data)
-    #
-    #     depends_on = [Dependency(t, grad_fn)]
-    # else:
-    #     depends_on = []
-    #
-    # return Tensor(data,
-    #               requires_grad,
-    #               depends_on)
     t = _ensure_tensor(t)
 
     return _sigmoid(t = t)
@@ -268,23 +151,6 @@ def ReLU(t: 'Tensorable') -> 'Tensor':
                requires_grad,
                depends_on)
     """
-    # t = ensure_tensor(t)
-    #
-    # data = np.maximum(0, t.data)
-    # requires_grad = t.requires_grad
-    #
-    # if requires_grad:
-    #
-    #     def grad_fn(grad: np.ndarray) -> np.ndarray:
-    #         return 1 * (t.data >= 0) * grad
-    #
-    #     depends_on = [Dependency(t, grad_fn)]
-    # else:
-    #     depends_on = []
-    #
-    # return Tensor(data,
-    #               requires_grad,
-    #               depends_on)
     t = _ensure_tensor(t)
 
     return _ReLU(t = t)
@@ -304,27 +170,6 @@ def Leaky_ReLU(t: 'Tensorable', k: 'float' = 0.01) -> 'Tensor':
                requires_grad,
                depends_on)
     """
-    # t = ensure_tensor(t)
-    #
-    # data = np.maximum(k * t.data, t.data)
-    # requires_grad = t.requires_grad
-    #
-    # if requires_grad:
-    #
-    #     def grad_fn(grad: np.ndarray) -> np.ndarray:
-    #         # divide gradarray into two parts, one for 1, and other for k
-    #         arr1 = 1 * (t.data >= 0) * grad
-    #         arr2 = k * (t.data < 0) * grad
-    #
-    #         return arr1 + arr2
-    #
-    #     depends_on = [Dependency(t, grad_fn)]
-    # else:
-    #     depends_on = []
-    #
-    # return Tensor(data,
-    #               requires_grad,
-    #               depends_on)
     t = _ensure_tensor(t)
 
     return _Leak_ReLU(t = t, k = k)
@@ -348,8 +193,6 @@ def softmax(t: 'Tensorable', axis=None) -> 'Tensor':
     t = _ensure_tensor(t)
 
     return _softmax(t = t, axis = axis)
-    # return exp(t) / (exp(t).sum(axis = axis, keepdims = True))
-
 
 def maximum(t1: 'Tensorable', t2: 'Tensorable', isnew: bool = True) -> 'Tensor':
     """
@@ -368,15 +211,6 @@ def maximum(t1: 'Tensorable', t2: 'Tensorable', isnew: bool = True) -> 'Tensor':
     :param t2:
     :return:
     """
-    # t1 = ensure_tensor(t1)
-    # t2 = ensure_tensor(t2)
-    # res = t1 * ge(t1, t2) + t2 * gt(t2, t1)
-    #
-    # if isnew:
-    #     res._depends_on = []
-    #     res._requires_grad = False
-    #     res._grad = None
-    # return res
     t1 = _ensure_tensor(t1)
     t2 = _ensure_tensor(t2)
 
@@ -400,17 +234,6 @@ def minimum(t1: 'Tensorable', t2: 'Tensorable', isnew: bool = True) -> 'Tensor':
     :param t2:
     :return:
     """
-    # t1 = ensure_tensor(t1)
-    # t2 = ensure_tensor(t2)
-    #
-    # res = t1 * le(t1, t2) + t2 * lt(t2, t1)
-    #
-    # if isnew:
-    #     res._depends_on = []
-    #     res._requires_grad = False
-    #     res._grad = None
-    #
-    # return res
     t1 = _ensure_tensor(t1)
     t2 = _ensure_tensor(t2)
 
@@ -441,30 +264,6 @@ def one_hot(t: 'Tensorable', depth, on_value=1, off_value=0, isnew: bool = True)
      [0.0, 0.0, 0.0],  # one_hot(-1)
      [0.0, 5.0, 0.0]]  # one_hot(1)
     """
-    # t = ensure_tensor(t)
-    #
-    # # divide data into two parts.
-    # pos_p = on_value * np.eye(depth)[t.data]
-    # neg_p = off_value * (np.zeros_like(pos_p) == pos_p)
-    # data = pos_p + neg_p
-    #
-    # requires_grad = t.requires_grad
-    #
-    # if requires_grad:
-    #     def grad_f(grad: np.ndarray) -> np.ndarray:
-    #         return np.zeros_like(t.data)
-    #
-    #     depends_on = [Dependency(tensor = t, grad_fn = grad_f)]
-    # else:
-    #     depends_on = []
-    #
-    # if isnew:
-    #     requires_grad = False
-    #     depends_on: List[Dependency] = []
-    #
-    # return Tensor(data,
-    #               requires_grad,
-    #               depends_on)
     t = _ensure_tensor(t)
 
     return _one_hot(t = t, depth = depth, on_value = on_value, off_value = off_value, isnew = isnew)
@@ -504,7 +303,6 @@ def abs(t: 'Tensorable', isnew: bool = True) -> 'Tensor':
     :param isnew:
     :return:
     """
-    # return maximum(t, -t, isnew = isnew)
     t = _ensure_tensor(t)
 
     return _abs(t = t, isnew = isnew)
