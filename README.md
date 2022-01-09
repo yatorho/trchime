@@ -4,8 +4,8 @@
 
 > Tiny deep-learning framework powered by python3  and numpy
 
-* [examples](examples/) --complete code examples of Tchime
-* [documentation](docs.md) --trchime development documentation and usage documentation
+* [examples](examples/) --complete code examples of Trchime
+* [documentation](docs.md) --Trchime development documentation and usage documentation
 
 ## Dependencies
 
