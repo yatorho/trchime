@@ -18,7 +18,7 @@
 
 Compute $ y=kx +b $​ gradient with trchime, and output the gradient of  $ x $​ .
 
-The whole process is completed by graph calculation and automatic derivation.
+The whole process is completed by graph calculation and automatic differentiation.
 
 ``` python	
 from trchime import Variable, Constant
