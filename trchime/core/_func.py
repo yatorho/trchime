@@ -243,7 +243,7 @@ def _softplus(t: 'Tensor') -> 'Tensor':
     :param t:
     :return:
     """
-    pass
+    raise NotImplementedError
 
 
 def _softmax(t: 'Tensor', axis) -> 'Tensor':
