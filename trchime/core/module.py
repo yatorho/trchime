@@ -257,7 +257,7 @@ class Module:
         pass
 
     def train(self, inputs) -> 'Tensor':
-        pass
+        return self.predict(inputs)
 
     def compile(self,
                 optimizer,
@@ -316,6 +316,14 @@ class Module:
         :return:
         """
         pass
+
+    def __initial_layer_list(self):
+        self.layer_list = []
+
+    def add(self, layer: 'ConnectionLayer') -> None:
+
+        self.layer_list.append(layer)
+
 
 
 def savemodel(model: 'Module', url: str = "", *args, **kwargs) -> 'None':
@@ -414,3 +422,4 @@ class GradientTape:
 
 
 from ..nn.optim import SGD, SGDM, RMSprop, Adagrad, Adam
+from ..nn.layer import ConnectionLayer

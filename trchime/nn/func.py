@@ -126,8 +126,8 @@ def convolution(img: 'Arrayable', filter: 'Arrayable', bias: 'Arrayable', pad: i
     return out
 
 
-def convolution_layer2D(img: 'Tensorable', filter: 'Tensorable', bias: 'Tensorable', pad: int = 0,
-                        stride: int = 1) -> 'Tensor':
+def Conv2D(img: 'Tensorable', filter: 'Tensorable', bias: 'Tensorable', pad: int = 0,
+           stride: int = 1) -> 'Tensor':
     """
     Also see
     ---------
@@ -175,8 +175,8 @@ def convolution_layer2D(img: 'Tensorable', filter: 'Tensorable', bias: 'Tensorab
     return _conv_tensor2D(img, filter, bias, pad, stride)
 
 
-def maxpooling_layer2D(img: 'Tensorable', f_shape: Union[Iterable, Tuple[int]] = (2, 2), pad: int = 0,
-                       stride: int = 2) -> 'Tensor':
+def Maxpool2D(img: 'Tensorable', f_shape: Union[Iterable, Tuple[int]] = (2, 2), pad: int = 0,
+              stride: int = 2) -> 'Tensor':
     """
 
 
@@ -202,8 +202,8 @@ def maxpooling_layer2D(img: 'Tensorable', f_shape: Union[Iterable, Tuple[int]] =
     return _maxpooling_tensor2D(img, (fH, fW), pad, stride)
 
 
-def meanpooling_layer2D(img: 'Tensorable', f_shape: Union[Iterable, Tuple[int]] = (2, 2), pad: int = 0,
-                        stride: int = 2) -> 'Tensor':
+def Meanpool2D(img: 'Tensorable', f_shape: Union[Iterable, Tuple[int]] = (2, 2), pad: int = 0,
+               stride: int = 2) -> 'Tensor':
     """
 
     :param img:
