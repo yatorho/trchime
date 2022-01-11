@@ -51,7 +51,7 @@ model.compile(optimizer = tce.nn.ADAM_OPTIMIZER,
 model.fit(x, y,
           batch_size = 32,
           epochs = 50,
-          validation_split = 0.3,  # split 20% of trainingsets as testset
+          validation_split = 0.3,  # split 30% of trainingsets as testset
           show_acc_tr = True)
 
 tce.savemodel(model, url = model_save_path)
