@@ -8,5 +8,12 @@ from .classes import Dataloader, Dataset
 
 from .optim import SGD_OPTIMIZER, SGDM_OPTIMIZER, ADAGRAD_OPTIMIZER, ADAM_OPTIMIZER, RMSPROP_OPTIMIZER
 from .loss import CATEGORYLOSS, MSELOSS
-from .layer import Layer_Manager, ConnectionLayer, Dense
+from .layer import Layer_Manager, \
+    ConnectionLayer, \
+    Dense, \
+    Convolution_layer2D, \
+    Flatten, \
+    Batch_normalize_layer, \
+    MaxPooling_layer2D, \
+    AveragePool_layer2D
 from .layer import Activation

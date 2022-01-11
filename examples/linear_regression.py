@@ -15,6 +15,7 @@ def get_dataset(p_sum):
 
 class linearModel(tce.Module):
     def __init__(self):
+        super().__init__()
         # declare coefficient variable w with initialize randomly
         self.w = tce.random.randn(3, 1, requires_grad = True)
         # declare bias with initialize randomly

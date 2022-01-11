@@ -27,6 +27,7 @@ def get_dataset(p_sum):
 # you need to overwrite two methods
 class unit_Model(tce.Module):
     def __init__(self):
+        super().__init__()
         # initialize paramters' matrix randomly
         self.w1 = tce.random.randn(4, 16, requires_grad = True) * 0.1
         self.b1 = tce.random.randn(1, 16, requires_grad = True) * 0.1

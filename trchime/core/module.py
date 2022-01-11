@@ -119,7 +119,7 @@ class _Fitter:
                 inputs = self.x_data[start: end]
                 acctual = self.y_data[start: end]
 
-                predicted = model.predict(inputs)
+                predicted = model.train(inputs)
 
                 loss = _sum((predicted - acctual) ** 2, axis = 1, keepdims = True)
                 loss = _mean(loss)
@@ -174,7 +174,7 @@ class _Fitter:
                 inputs = self.x_data[start: end]
                 acctual = self.y_data[start: end]
 
-                predicted = model.predict(inputs)
+                predicted = model.train(inputs)
 
                 loss = _sum(-(acctual * _log(predicted)))
 
@@ -240,6 +240,10 @@ class _Fitter:
 
 class Module:
 
+    def __init__(self):
+        self.layer_manager = Layer_Manager()
+        self.sequence = False
+
     def parameters(self) -> Iterator[Parameter]:
 
         for name, value in inspect.getmembers(self):
@@ -249,15 +253,29 @@ class Module:
             elif isinstance(value, Module):
                 yield from value.parameters()
 
+        for layer in self.layer_manager.layers_list:
+            if isinstance(layer.weight, Tensor):
+                if layer.weight.requires_grad:
+                    yield layer.weight
+            if isinstance(layer.bias, Tensor):
+                if layer.bias.requires_grad:
+                    yield layer.bias
+
     def zero_grad(self):
         for parameter in self.parameters():
             parameter.zero_grad()
 
     def predict(self, inputs) -> 'Tensor':
-        pass
+        if not self.sequence:
+            return self.train(inputs)
+        else:
+            return self.forward(inputs)
 
     def train(self, inputs) -> 'Tensor':
-        return self.predict(inputs)
+        if not self.sequence:
+            return self.predict(inputs)
+        else:
+            return self.forward(inputs)
 
     def compile(self,
                 optimizer,
@@ -308,6 +326,10 @@ class Module:
                          show_acc_tr,
                          show_acc)
 
+        if len(self.layer_manager.layers_list) > 0:
+            self.__construct_grap(x.shape)
+            self.sequence = True
+
         fitter.fit(self, self._compile_file)
 
     def summary(self):
@@ -317,12 +339,14 @@ class Module:
         """
         pass
 
-    def __initial_layer_list(self):
-        self.layer_list = []
+    def __construct_grap(self, inputs_shape: tuple):
+        self.layer_manager.construct_grap(inputs_shape)
 
     def add(self, layer: 'ConnectionLayer') -> None:
+        self.layer_manager.add(layer)
 
-        self.layer_list.append(layer)
+    def forward(self, inputs: Tensor, allow_activate: bool = True) -> Tensor:
+        return self.layer_manager.forward(inputs, allow_activate)
 
 
 
@@ -356,15 +380,11 @@ def _savemodel(model: 'Module', url: str, *args, **kwargs):
     :return:
     """
 
-    contain_nan = False
-    for name, item in inspect.getmembers(model):
-        if isinstance(item, Tensor):
-            item.non_depends_on()
-            if np.isnan(item).any():
-                contain_nan = True
 
-    if contain_nan:
-        raise ValueError("failed to save a model whose parameters has nan value")
+    for tensor in model.parameters():
+        tensor.non_depends_on()
+        if np.isnan(tensor.data).any():
+            raise ValueError("failed to save a model whose parameters has nan value")
 
     with open(url, 'wb') as file:
         dill.dump(model, file)
@@ -422,4 +442,4 @@ class GradientTape:
 
 
 from ..nn.optim import SGD, SGDM, RMSprop, Adagrad, Adam
-from ..nn.layer import ConnectionLayer
+from ..nn.layer import ConnectionLayer, Layer_Manager
