@@ -54,6 +54,6 @@ model.fit(x, y,
           validation_split = 0.3,  # split 20% of trainingsets as testset
           show_acc_tr = True)
 
-tce.savemodel(model, url = '4x32x24x2network.pkl')
+tce.savemodel(model, url = model_save_path)
 
 
