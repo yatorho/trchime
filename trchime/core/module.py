@@ -142,11 +142,11 @@ class _Fitter:
                         b1 = self.y_data.argmax(axis = 1)
                         c1 = (1 * (b1 == a1)).mean()
                         print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
-                              " |  Accuray:  %4.2f%%" % (c.data * 100),
-                              " |  Acc_tr: %4.2f%%" % (c1.data * 100))
+                              " |  Accuray:  %5.2f%%" % (c.data * 100),
+                              " |  Acc_tr: %5.2f%%" % (c1.data * 100))
                     elif show_acc:
                         print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
-                              " |  Accuray:  %4.2f%%" % (c.data * 100))
+                              " |  Accuray:  %5.2f%%" % (c.data * 100))
                     if (not show_acc) and (not show_acc_tr):
                         print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss)
                 else:
@@ -196,11 +196,11 @@ class _Fitter:
                         b1 = self.y_data.argmax(axis = 1)
                         c1 = (1 * (b1 == a1)).mean()
                         print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
-                              " |  Accuray:  %4.2f%%" % (c.data * 100),
-                              " |  Acc_tr: %4.2f%%" % (c1.data * 100))
+                              " |  Accuray:  %5.2f%%" % (c.data * 100),
+                              " |  Acc_tr: %5.2f%%" % (c1.data * 100))
                     elif show_acc:
                         print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
-                              " |  Accuray:  %4.2f%%" % (c.data * 100))
+                              " |  Accuray:  %5.2f%%" % (c.data * 100))
                     if (not show_acc) and (not show_acc_tr):
                         print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss)
                 else:
