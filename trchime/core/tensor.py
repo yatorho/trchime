@@ -311,7 +311,7 @@ class Tensor(tensor):
     def reshape(self, shape) -> 'Tensor':
         return reshape(self, shape)
 
-    def var(self, axis=None, ddof: int = 0, keepdims: bool = True) -> 'Tensor':
+    def var(self, axis=None, ddof: int = 0, keepdims: bool = False) -> 'Tensor':
         return var(self, axis, ddof, keepdims)
 
     def absolute_equal(self, other, only_value: bool = True) -> 'bool':

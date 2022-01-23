@@ -1,9 +1,10 @@
 from typing import List
 
 from ..core.tensor import Tensor
-from ..random.core import randn
+from ..random.core import randn, normal
 from ..core.func import ReLU, ReLUx, tanh, sigmoid, Leaky_ReLU, softplus, softmax, ELU
 from .func import Conv2D, Maxpool2D, Meanpool2D
+from ..core.multitensor import sqrt
 
 
 class Activation:
@@ -52,63 +53,39 @@ class Layer_Manager:
 
     def construct_grap(self, inputs_shape: tuple):
         next_inputs = inputs_shape
+
         for i, layer in enumerate(self.layers_list):
-            if i == 0:
-                if isinstance(layer, Flatten):
-                    next_inputs = layer.forward_shape(next_inputs)
+            if isinstance(layer, Flatten):
+                next_inputs = layer.forward_shape(next_inputs)
 
-                elif len(next_inputs) == 2 and isinstance(layer, Dense):
-                    layer.input_nums = inputs_shape[1]
+            elif len(next_inputs) == 2 and isinstance(layer, Dense):
+                layer.input_nums = next_inputs[1]
+                layer.output_nums = layer.nums
+                next_inputs = (next_inputs[0], layer.nums)
 
-                    layer.output_nums = layer.nums
-                    next_inputs = (next_inputs[0], layer.nums)
+                layer.weight = randn(layer.input_nums, layer.output_nums, requires_grad = True) * 0.1
+                layer.bias = randn(1, layer.output_nums, requires_grad = True) * 0.1
 
-                    layer.weight = randn(layer.input_nums, layer.output_nums, requires_grad = True) * 0.1
-                    layer.bias = randn(1, layer.output_nums, requires_grad = True) * 0.1
+            elif len(next_inputs) == 4 and isinstance(layer, Convolution_layer2D):
+                chanels_nums = next_inputs[1]
 
-                elif len(next_inputs) == 4 and isinstance(layer, Convolution_layer2D):
-                    chanels_nums = next_inputs[1]
+                layer.weight = randn(layer.nums, chanels_nums, layer.kernel_shape[0], layer.kernel_shape[1],
+                                     requires_grad = True) * 0.1
+                layer.bias = randn(layer.nums, 1, requires_grad = True) * 0.1
 
-                    layer.weight = randn(layer.nums, chanels_nums, layer.kernel_shape[0], layer.kernel_shape[1],
-                                         requires_grad = True) * 0.1
-                    layer.bias = randn(layer.nums, 1, requires_grad = True) * 0.1
+                next_inputs = layer.forward_shape(next_inputs)
 
-                    next_inputs = layer.forward_shape(next_inputs)
+            elif len(next_inputs) == 4 and isinstance(layer, MaxPooling_layer2D):
+                next_inputs = layer.forward_shape(next_inputs)
 
-                elif len(next_inputs) == 4 and isinstance(layer, MaxPooling_layer2D):
-                    next_inputs = layer.forward_shape(next_inputs)
+            elif len(next_inputs) == 4 and isinstance(layer, AveragePool_layer2D):
+                next_inputs = layer.forward_shape(next_inputs)
 
-                elif len(next_inputs) == 4 and isinstance(layer, AveragePool_layer2D):
+            elif isinstance(layer, Batch_normalize_layer):
+                layer.weight = normal(size = (1,) + next_inputs[1:], requires_grad = True)
+                layer.bias = normal(size = (1,) + next_inputs[1:], requires_grad = True)
 
-                    next_inputs = layer.forward_shape(next_inputs)
 
-
-            else:
-                if isinstance(layer, Flatten):
-                    next_inputs = layer.forward_shape(next_inputs)
-
-                elif len(next_inputs) == 2 and isinstance(layer, Dense):
-                    layer.input_nums = next_inputs[1]
-                    layer.output_nums = layer.nums
-                    next_inputs = (next_inputs[0], layer.nums)
-
-                    layer.weight = randn(layer.input_nums, layer.output_nums, requires_grad = True) * 0.1
-                    layer.bias = randn(1, layer.output_nums, requires_grad = True) * 0.1
-
-                elif len(next_inputs) == 4 and isinstance(layer, Convolution_layer2D):
-                    chanels_nums = next_inputs[1]
-
-                    layer.weight = randn(layer.nums, chanels_nums, layer.kernel_shape[0], layer.kernel_shape[1],
-                                         requires_grad = True) * 0.1
-                    layer.bias = randn(layer.nums, 1, requires_grad = True) * 0.1
-
-                    next_inputs = layer.forward_shape(next_inputs)
-
-                elif len(next_inputs) == 4 and isinstance(layer, MaxPooling_layer2D):
-                    next_inputs = layer.forward_shape(next_inputs)
-
-                elif len(next_inputs) == 4 and isinstance(layer, AveragePool_layer2D):
-                    next_inputs = layer.forward_shape(next_inputs)
 
 
     def forward(self, inputs: Tensor, allow_activate: bool = True) -> Tensor:
@@ -152,7 +129,24 @@ class Dense(ConnectionLayer):
 
 
 class Batch_normalize_layer(ConnectionLayer):
-    pass
+
+    def __init__(self, acivation: str = Activation.NONE):
+        super().__init__('batch normalize layer')
+        self.activation = acivation
+        self.activator = Activator(acivation)
+
+    def forward(self, inputs: Tensor, allow_activate: bool = True) -> Tensor:
+        if not allow_activate:
+            mu = inputs.mean(axis = 0, keepdims = True)
+            var = inputs.var(axis = 0, keepdims = True)
+            t_norm = (inputs - mu) / sqrt(var + 1e-12)
+            return self.weight * t_norm + self.bias
+        else:
+            mu = inputs.mean(axis = 0, keepdims = True)
+            var = inputs.var(axis = 0, keepdims = True)
+            t_norm = (inputs - mu) / sqrt(var + 1e-12)
+            return self.activator.activate(self.weight * t_norm + self.bias)
+
 
 class Flatten(ConnectionLayer):
     def __init__(self, activation: str = Activation.NONE):
@@ -175,6 +169,7 @@ class Flatten(ConnectionLayer):
                 if i != 0:
                     ndims *= n
             return input_shape[0], ndims
+
 
 class Convolution_layer2D(ConnectionLayer):
     def __init__(self, kernel_shape: tuple,
@@ -228,6 +223,7 @@ class MaxPooling_layer2D(ConnectionLayer):
         out_w = int(1 + (W + 2 * self.pad - self.kernel_shape[1]) / self.stride)
 
         return inputs_shape[0], inputs_shape[1], out_h, out_w
+
 
 class AveragePool_layer2D(ConnectionLayer):
     def __init__(self, kernel_shape: tuple,

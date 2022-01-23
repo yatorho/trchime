@@ -53,7 +53,7 @@ def _var(t: 'Tensor', axis, ddof: int, keepdims: bool) -> 'Tensor':
     :param keepdims:
     :return:
     """
-    return _sum(_pow(t, Tensor(2)), axis, keepdims) / (np.size(t.data, axis = axis) - ddof)
+    return _sum(_pow(t - _mean(t, axis, True), Tensor(2)), axis, keepdims) / (np.size(t.data, axis = axis) - ddof)
 
 
 def _mean(t: 'Tensor', axis=None, keepdims: bool = False) -> 'Tensor':
