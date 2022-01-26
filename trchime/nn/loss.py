@@ -2,11 +2,13 @@ from ..core.tensor import Tensor
 # noinspection PyProtectedMember
 from ..core._multitensor import _sum, _mean
 # noinspection PyProtectedMember
-from ..core._func import _log
+from ..core._func import _log, _abs
 from ..core.module import Module
 
-MSELOSS = 'mean_square_loss'
+MSELOSS = 'mean_square_error_loss'
 CATEGORYLOSS = 'categorical_cross_entropy_loss'
+MAELOSS = 'mean_absolute_error_loss'
+
 
 
 class LOSS:
@@ -39,3 +41,14 @@ class CATEGORY_LOSS(LOSS):
 
     def define_loss(self, predicted: 'Tensor', acctual: 'Tensor', pam: 'Module' = None) -> None:
         self.loss = _sum(-(acctual * _log(predicted)))
+
+
+class MAE_LOSS(LOSS):
+
+    def __init__(self):
+        super().__init__(MAELOSS)
+
+    def define_loss(self, predicted: 'Tensor', acctual: 'Tensor', pam: 'Module' = None) -> None:
+        self.loss = _sum(_abs(predicted - acctual, isnew = False), axis = predicted.ndim - 1, keepdims = True)
+        self.loss = _mean(self.loss)
+
