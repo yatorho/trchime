@@ -5,8 +5,6 @@ import inspect
 import dill
 import numpy as np
 
-from ._multitensor import _mean, _sum
-from ._func import _log
 from .tensor import Tensor
 from .parameter import Parameter
 from ..call import ProgressBar
@@ -105,6 +103,7 @@ class _Fitter:
             print('\r' + msg + self.pd(i), end = "")
 
     def _mean_square_loss_fit(self, model: 'Module', show_acc_tr: bool, show_acc: bool, freq) -> 'None':
+        warnings.warn("`_mean_square_loss_fit` method has been deprecated. take `_fit` instead", DeprecationWarning)
         f = 0
 
         for epoch in range(self.epoch):
@@ -121,12 +120,12 @@ class _Fitter:
 
                 predicted = model.train(inputs)
 
-                loss = _sum((predicted - acctual) ** 2, axis = 1, keepdims = True)
-                loss = _mean(loss)
+                self.loss.define_loss(predicted, acctual)
+                self.loss.backward()
 
-                loss.backward()
                 self.optimizer.step(model)
-                epoch_loss += loss.data
+
+                epoch_loss += self.loss.loss.data
 
             if f >= 1:
                 f = 0
@@ -160,6 +159,8 @@ class _Fitter:
         :param freq:
         :return:
         """
+        warnings.warn("`_categorical_cross_entropy_loss` method has been deprecated. take `_fit` instead",
+                      DeprecationWarning)
         f = 0
 
         for epoch in range(self.epoch):
@@ -176,11 +177,12 @@ class _Fitter:
 
                 predicted = model.train(inputs)
 
-                loss = _sum(-(acctual * _log(predicted)))
+                self.loss.define_loss(predicted, acctual)
 
-                loss.backward()
+                self.loss.backward()
                 self.optimizer.step(model)
-                epoch_loss += loss.data
+
+                epoch_loss += self.loss.loss.data
 
             if f >= 1:
                 f = 0
@@ -206,36 +208,94 @@ class _Fitter:
                 else:
                     print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss)
 
+    def _fit(self, model: 'Module'):
+        f = 0
+
+        for epoch in range(self.epoch):
+            epoch_loss = 0
+            f += 1 / self.validation_freq
+
+            for start in range(0, self.x_data.shape[0], self.batch_size):
+                self._show_progress(100 * start / self.x_data.shape[0], f'{epoch}th epoch', True)
+
+                end = start + self.batch_size
+
+                inputs = self.x_data[start: end]
+                acctual = self.y_data[start: end]
+
+                predicted = model.train(inputs)
+
+                self.loss.define_loss(predicted, acctual, model)
+                self.loss.backward()
+
+                self.optimizer.step(model)
+
+                epoch_loss += self.loss.loss.data
+
+            if f >= 1:
+                f = 0
+                if not self.notestflag:
+                    y_test_hat = model.predict(self.x_test)
+                    a = y_test_hat.argmax(axis = 1)
+                    b = self.y_test.argmax(axis = 1)
+                    c = (1 * (a == b)).mean()
+
+                    if self.show_acc_tr:
+                        y_train_hat = model.predict(self.x_data)
+                        a1 = y_train_hat.argmax(axis = 1)
+                        b1 = self.y_data.argmax(axis = 1)
+                        c1 = (1 * (b1 == a1)).mean()
+                        print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
+                              " |  Accuray:  %5.2f%%" % (c.data * 100),
+                              " |  Acc_tr: %5.2f%%" % (c1.data * 100))
+                    elif self.show_acc:
+                        print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
+                              " |  Accuray:  %5.2f%%" % (c.data * 100))
+                    if (not self.show_acc) and (not self.show_acc_tr):
+                        print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss)
+                else:
+                    print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss)
+
+
     def fit(self, model: 'Module', compile):
         from ..nn import SGD_OPTIMIZER, SGDM_OPTIMIZER, ADAGRAD_OPTIMIZER, ADAM_OPTIMIZER, RMSPROP_OPTIMIZER
         from ..nn import MSELOSS, CATEGORYLOSS
 
-        if compile.get('optimizer') == SGD_OPTIMIZER:
+        optimizer_f = compile.get('optimizer')
+
+        if optimizer_f == SGD_OPTIMIZER:
             self.optimizer = SGD(compile.get('learning_rate', None))
-        elif compile.get('optimizer') == SGDM_OPTIMIZER:
+
+        elif optimizer_f == SGDM_OPTIMIZER:
             self.optimizer = SGDM(compile.get('learning_rate', None), compile.get('sgdm_beta', None))
-        elif compile.get('optimizer') == RMSPROP_OPTIMIZER:
+
+        elif optimizer_f == RMSPROP_OPTIMIZER:
             self.optimizer = RMSprop(compile.get('learning_rate', None), compile.get('rmsprop_beta', None))
-        elif compile.get('optimizer') == ADAGRAD_OPTIMIZER:
+
+        elif optimizer_f == ADAGRAD_OPTIMIZER:
             self.optimizer = Adagrad(compile.get('learning_rate', None))
-        elif compile.get('optimizer') == ADAM_OPTIMIZER:
+
+        elif optimizer_f == ADAM_OPTIMIZER:
             self.optimizer = Adam(compile.get('learning_rate', None), compile.get('adam_beta1', None),
                                   compile.get('adam_beta2', None), compile.get('adam_corrected', None))
 
+        elif isinstance(optimizer_f, Optimizer):
+            self.optimizer = optimizer_f
+
+
         loss_f = compile.get('loss', MSELOSS)
 
-        if loss_f == 'square_loss':
-            warnings.warn('`square_loss` command would be interpreted as `mean square error`')
-            self.loss = 'mean_square_loss'
-            self._mean_square_loss_fit(model, self.show_acc_tr, self.show_acc, self.validation_freq)
-
-        elif loss_f == MSELOSS:
-            self.loss = 'mean_square_loss'
-            self._mean_square_loss_fit(model, self.show_acc_tr, self.show_acc, self.validation_freq)
+        if loss_f == MSELOSS:
+            self.loss = MSE_LOSS()
+            self._fit(model)
 
         elif loss_f == CATEGORYLOSS:
-            self.loss = 'categorical_cross_entropy_loss'
-            self._categorical_cross_entropy_loss(model, self.show_acc_tr, self.show_acc, self.validation_freq)
+            self.loss = CATEGORY_LOSS()
+            self._fit(model)
+
+        elif isinstance(loss_f, LOSS):
+            self.loss = loss_f
+            self._fit(model)
 
 
 class Module:
@@ -349,7 +409,6 @@ class Module:
         return self.layer_manager.forward(inputs, allow_activate)
 
 
-
 def savemodel(model: 'Module', url: str = "", *args, **kwargs) -> 'None':
     """
     Herer implements saving operation for model.
@@ -379,7 +438,6 @@ def _savemodel(model: 'Module', url: str, *args, **kwargs):
     :param kwargs:
     :return:
     """
-
 
     for tensor in model.parameters():
         tensor.non_depends_on()
@@ -439,7 +497,9 @@ class GradientTape:
     def _zero_all_grad(self, fn: Tensor):
         if self.isrun:
             raise NotImplementedError
+        raise NotImplementedError
 
 
-from ..nn.optim import SGD, SGDM, RMSprop, Adagrad, Adam
+from ..nn.optim import SGD, SGDM, RMSprop, Adagrad, Adam, Optimizer
 from ..nn.layer import ConnectionLayer, Layer_Manager
+from ..nn.loss import LOSS, MSE_LOSS, CATEGORY_LOSS

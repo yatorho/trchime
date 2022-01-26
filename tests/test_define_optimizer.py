@@ -1,6 +1,19 @@
 import trchime as tce
 
 
+class MyOptimizer(tce.nn.optim.Optimizer):
+    def __init__(self):
+        super().__init__('myop')
+        self.lr = 0.1
+
+    def step(self, module) -> 'None':
+        for parameter in module.parameters():
+            parameter.assign_sub(self.lr * parameter.grad)
+
+
+
+
+
 def getSource():
     """
     collect your datasets
@@ -56,9 +69,7 @@ class _4dunit_bool_Model(tce.Module):
 
 model = _4dunit_bool_Model()
 
-
-
-model.compile(optimizer = tce.nn.SGDM_OPTIMIZER,
+model.compile(optimizer = MyOptimizer(),
               loss = tce.nn.MSELOSS,
               learning_rate = 0.1)
 
@@ -68,4 +79,3 @@ model.fit(x_data,
           epochs = 100,
           validation_split = 0.2,
           show_acc_tr = True)
-

@@ -10,17 +10,26 @@ from ..random import random
 from ..core.tensor import Tensor
 from ..core.module import Module
 
-
 SGD_OPTIMIZER = 'StochasticGradientDescentOptimizer'
 SGDM_OPTIMIZER = 'MomentumOptimizer'
 ADAGRAD_OPTIMIZER = 'AdaptiveGradientOptimizer'
 RMSPROP_OPTIMIZER = 'RootMeanSquarePropOptimizer'
 ADAM_OPTIMIZER = 'AdaptiveMomentEstimationOptimizer'
 
-class _SGD_imple:
+
+class Optimizer:
+    def __init__(self, name: str) -> 'None':
+        self.name = name
+
+    def step(self, module: Module) -> 'None':
+        pass
+
+
+class _SGD_imple(Optimizer):
     """ SGD optimizer """
 
     def __init__(self, lr: float) -> 'None':
+        super().__init__(SGD_OPTIMIZER)
         self.lr = lr
 
     def step(self, module: Module) -> 'None':
@@ -44,10 +53,11 @@ class SGD(_SGD_imple):
         super().step(module)
 
 
-class _SGDM_imple:
+class _SGDM_imple(Optimizer):
     """ SGD with momentum """
 
     def __init__(self, lr: float, beta: float) -> 'None':
+        super().__init__(SGDM_OPTIMIZER)
         self.lr = lr
         self.beta = beta
         self._isinit = False
@@ -95,10 +105,11 @@ class SGDM(_SGDM_imple):
         super().step(module)
 
 
-class _RMSprop_imple:
+class _RMSprop_imple(Optimizer):
     """ RMSprop optimizer"""
 
     def __init__(self, lr: float, beta: float):
+        super().__init__(RMSPROP_OPTIMIZER)
         self.lr = lr
         self.beta = beta
 
@@ -142,10 +153,11 @@ class RMSprop(_RMSprop_imple):
         super().step(module)
 
 
-class _Adagrad_imple:
+class _Adagrad_imple(Optimizer):
     """ Adagrad optimizer"""
 
     def __init__(self, lr: float):
+        super().__init__(ADAGRAD_OPTIMIZER)
         self.lr = lr
 
         self._isinit = False
@@ -184,10 +196,11 @@ class Adagrad(_Adagrad_imple):
         super().step(module)
 
 
-class _Adam_imple:
+class _Adam_imple(Optimizer):
     """ Adam optimizer """
 
     def __init__(self, lr: float = 0.01, beta1: float = 0.9, beta2: float = 0.9, corrected: bool = False) -> 'None':
+        super().__init__(ADAM_OPTIMIZER)
         self.lr = lr
         self.beta1 = beta1
         self.beta2 = beta2
