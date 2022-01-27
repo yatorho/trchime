@@ -338,6 +338,7 @@ class Module:
 
     def __init__(self):
         """
+        test test
         Here implements the constructor for module.
 
         It's necessary to call constructor of parent class 'super().__init().__ ' when extend Module
@@ -355,7 +356,6 @@ class Module:
 
                 self.w3 = tce.Parameter(50, 2)
                 self.b3 = tce.Parameter(1, 2)
-
         """
         self.layer_manager = Layer_Manager()
         self.sequence = False
