@@ -6,8 +6,8 @@ import dill
 import numpy as np
 
 from .tensor import Tensor
-from .parameter import Parameter
-from ..call import ProgressBar
+from .parameter import Parameter, Constant
+from ..call import ProgressBar, MessageBoard
 from typing import List, Tuple
 # noinspection PyProtectedMember
 from .gather import _ensure_tensor
@@ -377,6 +377,24 @@ class Module:
                 if layer.bias.requires_grad:
                     yield layer.bias
 
+    def constants(self) -> Iterator[Constant]:
+
+        for name, value in inspect.getmembers(self):
+            if isinstance(value, Tensor):
+                if not value.requires_grad:
+                    yield value
+            elif isinstance(value, Module):
+                yield from value.parameters()
+
+        for layer in self.layer_manager.layers_list:
+            if isinstance(layer.weight, Tensor):
+                if not layer.weight.requires_grad:
+                    yield layer.weight
+            if isinstance(layer.bias, Tensor):
+                if not layer.bias.requires_grad:
+                    yield layer.bias
+
+
     def zero_grad(self):
         for parameter in self.parameters():
             parameter.zero_grad()
@@ -533,10 +551,32 @@ class Module:
         :return:
         """
 
+        md = MessageBoard(66)
+
         p_nums = 0
         for p in self.parameters():
             p_nums += p.size
 
+        c_nums = 0
+        for c in self.constants():
+            c_nums += c.size
+
+        md.add_horizontal_line()
+        md.add_text(1, "Model: " + str(self.__class__))
+
+        md.add_horizontal_line(full = 2)
+
+        md.add_horizontal_line()
+        md.add_text(3, "Total params: " + str(p_nums + c_nums), width = 66)
+
+        md.add_horizontal_line()
+        md.add_text(4, "Trainable params: " + str(p_nums), width = 66)
+
+        md.add_horizontal_line()
+        md.add_text(5, "Non-trainable params: " + str(c_nums), width = 66)
+
+        md.add_horizontal_line(full = 1)
+        md.show()
 
 
     def __construct_grap(self, inputs_shape: tuple):

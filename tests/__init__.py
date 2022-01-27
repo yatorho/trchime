@@ -57,9 +57,42 @@ x, y = get_dataset(points_sum)
 # instantiate your model
 model = unit_Model()
 
+class MyOptimizer(tce.nn.optim.Optimizer):  # sgd
+
+    def __init__(self):
+        super().__init__('my optimizer')
+        self.lr = 0.2
+
+    def step(self, module) -> 'None':
+        """
+        fjfjlafjld
+        :param module:
+        :return:
+        """
+        for parameter in module.parameters():
+            parameter.assign_sub(self.lr * parameter.grad)
+
+
+class MYLOSS(tce.nn.loss.LOSS):
+
+    def __init__(self):
+        super().__init__("my loss")
+
+    def define_loss(self, predicted, actual, model = None) -> None:
+
+        psum = tce.Tensor(0, requires_grad = True)
+        for p in model.parameters():
+            psum += (p**2).sum()
+
+
+        self.loss = ((predicted - actual) ** 2).sum() + 0.001 * psum
+
+myop = MyOptimizer()
+myloss = MYLOSS()
+
 # compile your model
-model.compile(optimizer = tce.nn.ADAM_OPTIMIZER,  # choose stochastic gradient descent optimizer
-              loss = tce.nn.MSELOSS,  # set mean square loss function
+model.compile(optimizer = myop,  # choose stochastic gradient descent optimizer
+              loss = myloss,  # set mean square loss function
               learning_rate = 0.1)  # set learning rate
 
 # train your model
@@ -68,3 +101,5 @@ model.fit(x, y,  # input training data
           epochs = 100,
           validation_split = 0.2,  # split 20% of trainingset as testset
           show_acc = True)  # show accuracy per epoch
+
+

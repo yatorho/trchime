@@ -65,7 +65,8 @@ model.compile(optimizer = tce.nn.SGDM_OPTIMIZER,
 model.fit(x_data,
           y_data,
           batch_size = 32,
-          epochs = 100,
+          epochs = 20,
           validation_split = 0.2,
           show_acc_tr = True)
 
+model.summary()
