@@ -28,7 +28,9 @@ class _Fitter:
                  validation_data: 'Tuple[Tensor]' = None,
                  validation_freq: int = 1,
                  show_acc_tr: bool = False,
-                 show_acc: bool = False):
+                 show_acc: bool = False,
+                 show_loss: bool = False,
+                 epochs_mean_loss: bool = False):
         """
 
         :param shuffle:
@@ -62,8 +64,10 @@ class _Fitter:
         self.validation_freq = validation_freq
         self.show_acc_tr = show_acc_tr
         self.show_acc = show_acc
+        self.show_loss = show_loss
+        self.epochs_mean_loss = epochs_mean_loss
 
-        self.pd = ProgressBar()
+        self.pd = ProgressBar(65)
 
     def _shuffle(self, isshuffle, x_data: 'Tensor', y_data: 'Tensor'):
         """
@@ -213,6 +217,7 @@ class _Fitter:
 
         for epoch in range(self.epoch):
             epoch_loss = 0
+            index = 0
             f += 1 / self.validation_freq
 
             for start in range(0, self.x_data.shape[0], self.batch_size):
@@ -231,28 +236,59 @@ class _Fitter:
                 self.optimizer.step(model)
 
                 epoch_loss += self.loss.loss.data
+                index += 1
 
             if f >= 1:
                 f = 0
+                if self.epochs_mean_loss:
+                    epoch_loss /= index
+
                 if not self.notestflag:
                     y_test_hat = model.predict(self.x_test)
                     a = y_test_hat.argmax(axis = 1)
                     b = self.y_test.argmax(axis = 1)
                     c = (1 * (a == b)).mean()
 
-                    if self.show_acc_tr:
-                        y_train_hat = model.predict(self.x_data)
-                        a1 = y_train_hat.argmax(axis = 1)
-                        b1 = self.y_data.argmax(axis = 1)
-                        c1 = (1 * (b1 == a1)).mean()
-                        print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
-                              " |  Accuracy:  %5.2f%%" % (c.data * 100),
-                              " |  Acc_tr: %5.2f%%" % (c1.data * 100))
-                    elif self.show_acc:
-                        print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
-                              " |  Accuracy:  %5.2f%%" % (c.data * 100))
-                    if (not self.show_acc) and (not self.show_acc_tr):
-                        print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss)
+                    if not self.show_loss:
+                        if self.show_acc_tr:
+                            y_train_hat = model.predict(self.x_data)
+                            a1 = y_train_hat.argmax(axis = 1)
+                            b1 = self.y_data.argmax(axis = 1)
+                            c1 = (1 * (b1 == a1)).mean()
+                            print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
+                                  " |  Accuracy:  %5.2f%%" % (c.data * 100),
+                                  " |  Acc_tr: %5.2f%%" % (c1.data * 100))
+
+                        elif self.show_acc:
+                            print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
+                                  " |  Accuracy:  %5.2f%%" % (c.data * 100))
+
+                        else:
+                            print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss)
+
+                    else:
+                        self.loss.define_loss(y_test_hat, self.y_test, model)
+
+                        if self.show_acc_tr:
+                            y_train_hat = model.predict(self.x_data)
+                            a1 = y_train_hat.argmax(axis = 1)
+                            b1 = self.y_data.argmax(axis = 1)
+                            c1 = (1 * (b1 == a1)).mean()
+
+                            print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
+                                  " |  loss_test: %12.5f" % self.loss.loss.data,
+                                  " |  Accuracy: %5.2f%%" % (c.data * 100),
+                                  " |  Acc_tr: %5.2f%%" % (c1.data * 100))
+
+                        elif self.show_acc:
+                            print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
+                                  " |  loss_test: %12.5f" % self.loss.loss.data,
+                                  " |  Accuracy:  %5.2f%%" % (c.data * 100))
+
+                        else:
+                            print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
+                                  " |  loss_test: %12.5f" % self.loss.loss.data)
+
                 else:
                     print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss)
 
@@ -301,6 +337,9 @@ class _Fitter:
 class Module:
 
     def __init__(self):
+        """
+        test test
+        """
         self.layer_manager = Layer_Manager()
         self.sequence = False
 
@@ -367,7 +406,9 @@ class Module:
             shuffle=True,
             validation_freq=1,
             show_acc_tr: bool = False,
-            show_acc: bool = False):
+            show_acc: bool = False,
+            show_loss: bool = False,
+            epochs_mean_loss: bool = False):
         """
 
 
@@ -384,7 +425,9 @@ class Module:
                          validation_data,
                          validation_freq,
                          show_acc_tr,
-                         show_acc)
+                         show_acc,
+                         show_loss,
+                         epochs_mean_loss)
 
         if len(self.layer_manager.layers_list) > 0:
             self.__construct_grap(x.shape)
@@ -397,7 +440,12 @@ class Module:
         summary the information for your model.
         :return:
         """
-        pass
+
+        p_nums = 0
+        for p in self.parameters():
+            p_nums += p.size
+
+
 
     def __construct_grap(self, inputs_shape: tuple):
         self.layer_manager.construct_grap(inputs_shape)
