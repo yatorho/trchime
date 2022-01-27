@@ -373,7 +373,7 @@ class Module:
 
         """
         x = _ensure_tensor(x)
-        y = _ensure_tensor(y)  # tf
+        y = _ensure_tensor(y)
 
         fitter = _Fitter(x,
                          y,
