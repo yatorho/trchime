@@ -52,5 +52,3 @@ class MAE_LOSS(LOSS):
         self.loss = _sum(_abs(predicted - acctual, isnew = False), axis = predicted.ndim - 1, keepdims = True)
         self.loss = _mean(self.loss)
 
-class Myclass:
-    pass
