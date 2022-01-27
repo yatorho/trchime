@@ -477,32 +477,34 @@ class Module:
         Here implements the fit function for module
 
         Parameter:
-        x: The input of the train data
+        x: 'Tensorable', The input of the train set
 
-        y: The output of the train data
+        y: Tensorable', The output of the train set
 
-        batch_size：The number of the date every time calculate the grad
+        batch_size：optional, 'Integer', batch size
 
-        epochs: The times of evolve
+        epochs: optional, 'Integer', The times of evolve
 
-        validation_split: The proportion of the train data you choose the train
+        validation_split: optional, 'Float', The proportion of the train set chosen as test set
 
-        validation_data: The test data for you neural network which has been trained
+        validation_data: optional, 'Tensorable', The test set for neural network which has been trained
 
-        shuffle:
+        shuffle: optional, 'Bool', Whether to shuffle the inout of train set and test set
 
-        validation_freq:
+        validation_freq: optional, 'Integer', Change the frequency of showing the accuracy of per epoch
 
-        show_acc_tr: Show the accuracy of train data
+        show_acc_tr: optional, 'Bool', Whether to show the accuracy of train set of per epoch
 
-        show_acc: Show the accuracy of test data
+        show_acc: optional, 'Bool', Whether to show the accuracy of test data of per epoch
+
+        show_loss: optional, 'Bool', Whether to show the loss of test set of per epoch
 
         Example:
         model.fit(x, y,  # input training data
                   batch_size = 32,  # set batch_size and epochs
                   epochs = 100,
-                  validation_split = 0.2,  # split 20% of trainingset as testset
-                  show_acc = True)  # show accuray per epoch
+                  validation_split = 0.2,  # split 20% of training set as test set
+                  show_acc = True)  # show accuracy per epoch
 
         """
         x = _ensure_tensor(x)
