@@ -266,7 +266,7 @@ class Tensor(tensor):
     def assign_sub(self, val) -> 'None':
         """
 
-        test test
+        test test test!
 
         """
         self.data -= _ensure_array(val)
