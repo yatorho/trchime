@@ -264,6 +264,11 @@ class Tensor(tensor):
         self.data += _ensure_array(val)
 
     def assign_sub(self, val) -> 'None':
+        """
+
+        test test
+
+        """
         self.data -= _ensure_array(val)
 
     def assign_mul(self, val) -> 'None':
