@@ -19,7 +19,7 @@ for i in range(100):
     delta = 0.1 * x.grad  # gradient descent delta
     # update x with method `assign_sub`
     # specially, updating variable with `-=` operator would be inefficiently and slowly horribly
-    # we strongly recomend this way to update your network's parameters instead of `-=` operator
+    # we strongly recommend this way to update your network's parameters instead of `-=` operator
     x.assign_sub(delta)
 
     print('z:', z.data)

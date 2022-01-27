@@ -141,11 +141,11 @@ class _Fitter:
                         b1 = self.y_data.argmax(axis = 1)
                         c1 = (1 * (b1 == a1)).mean()
                         print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
-                              " |  Accuray:  %5.2f%%" % (c.data * 100),
+                              " |  Accuracy:  %5.2f%%" % (c.data * 100),
                               " |  Acc_tr: %5.2f%%" % (c1.data * 100))
                     elif show_acc:
                         print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
-                              " |  Accuray:  %5.2f%%" % (c.data * 100))
+                              " |  Accuracy:  %5.2f%%" % (c.data * 100))
                     if (not show_acc) and (not show_acc_tr):
                         print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss)
                 else:
@@ -198,11 +198,11 @@ class _Fitter:
                         b1 = self.y_data.argmax(axis = 1)
                         c1 = (1 * (b1 == a1)).mean()
                         print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
-                              " |  Accuray:  %5.2f%%" % (c.data * 100),
+                              " |  Accuracy:  %5.2f%%" % (c.data * 100),
                               " |  Acc_tr: %5.2f%%" % (c1.data * 100))
                     elif show_acc:
                         print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
-                              " |  Accuray:  %5.2f%%" % (c.data * 100))
+                              " |  Accuracy:  %5.2f%%" % (c.data * 100))
                     if (not show_acc) and (not show_acc_tr):
                         print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss)
                 else:
@@ -221,11 +221,11 @@ class _Fitter:
                 end = start + self.batch_size
 
                 inputs = self.x_data[start: end]
-                acctual = self.y_data[start: end]
+                actual = self.y_data[start: end]
 
                 predicted = model.train(inputs)
 
-                self.loss.define_loss(predicted, acctual, model)
+                self.loss.define_loss(predicted, actual, model)
                 self.loss.backward()
 
                 self.optimizer.step(model)
@@ -246,11 +246,11 @@ class _Fitter:
                         b1 = self.y_data.argmax(axis = 1)
                         c1 = (1 * (b1 == a1)).mean()
                         print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
-                              " |  Accuray:  %5.2f%%" % (c.data * 100),
+                              " |  Accuracy:  %5.2f%%" % (c.data * 100),
                               " |  Acc_tr: %5.2f%%" % (c1.data * 100))
                     elif self.show_acc:
                         print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
-                              " |  Accuray:  %5.2f%%" % (c.data * 100))
+                              " |  Accuracy:  %5.2f%%" % (c.data * 100))
                     if (not self.show_acc) and (not self.show_acc_tr):
                         print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss)
                 else:
@@ -394,7 +394,7 @@ class Module:
 
     def summary(self):
         """
-        summary the imformation for your modle.
+        summary the information for your model.
         :return:
         """
         pass
@@ -411,7 +411,7 @@ class Module:
 
 def savemodel(model: 'Module', url: str = "", *args, **kwargs) -> 'None':
     """
-    Herer implements saving operation for model.
+    Here implements saving operation for model.
 
     Examples:
     ----------

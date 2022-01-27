@@ -4,10 +4,10 @@ import numpy as np
 a = np.array([[1, 2, 3],
               [2, 3, 4],
               [-2, 4, 1]])
-a = tce.Variable(a)  # declare a varialbe
+a = tce.Variable(a)  # declare a variable
 
 b = np.array([2, 3, 4])
-b = tce.Variable(b)  # declare another varialbe
+b = tce.Variable(b)  # declare another variable
 
 y = a * b  # compute value of a * b
 z = y.sum()  # get sum of y

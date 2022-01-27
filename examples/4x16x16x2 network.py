@@ -67,4 +67,4 @@ model.fit(x, y,  # input training data
           batch_size = 32,  # set batch_size and epochs
           epochs = 100,
           validation_split = 0.2,  # split 20% of trainingset as testset
-          show_acc = True)  # show accuray per epoch
+          show_acc = True)  # show accuracy per epoch
