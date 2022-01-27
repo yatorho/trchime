@@ -7,6 +7,8 @@ from .func import Meanpool2D
 from .classes import Dataloader, Dataset
 
 from .optim import SGD_OPTIMIZER, SGDM_OPTIMIZER, ADAGRAD_OPTIMIZER, ADAM_OPTIMIZER, RMSPROP_OPTIMIZER
+from .optim import Optimizer
+from .loss import LOSS
 from .loss import CATEGORYLOSS, MSELOSS
 from .layer import Layer_Manager, \
     ConnectionLayer, \
