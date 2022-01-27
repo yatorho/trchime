@@ -26,14 +26,28 @@ from .gather import _ensure_tensor
 
 def tanh(t: 'Tensorable') -> 'Tensor':
     """
-    Implement tanh function and its gradient function:
-    if puts x -> tanh(x), the gradient of tanh(x) would be
-    (1 - tanh(x) * tanh(x)).
+    Here implements the tanh(hyperbolic tangent) function for tensors.
 
-    :param t:
-    :return: Tensor(data,
-                   requires_grad,
-                   depends_on)
+    Parameter: t: 'Tensorable'
+    Return: Tensor: value of tanh(t)
+
+    Examples:
+    >>> a = tce.Tensor([[1, 2],
+                        [3, 4]], requires_grad = True, dtype = tce.int32)
+    >>> b = tce.tanh(a)
+    >>> b
+    Tensor(
+    [[0.76159416 0.96402758]
+     [0.99505475 0.9993293 ]], requires_grad=True, dtype=float64)
+    >>> x = tce.tanh(3)
+    >>> x
+    Tensor(
+    0.9950547536867305, requires_grad=False, dtype=float64)
+    >>> y = tce.trange(6, 9)
+    >>> print(tce.tanh(y))
+    Tensor(
+    [0.99998771 0.99999834 0.99999977], requires_grad=False, dtype=float64)
+
     """
     t = _ensure_tensor(t)
 

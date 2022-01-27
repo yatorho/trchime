@@ -338,7 +338,24 @@ class Module:
 
     def __init__(self):
         """
-        test test
+        Here implements the constructor for module.
+
+        It's necessary to call constructor of parent class 'super().__init().__ ' when extend Module
+
+        Example:
+        class MyModule(tce.Module):
+
+            def __init__(self):
+
+                self.w1 = tce.Parameter(4, 50)
+                self.b1 = tce.Parameter(1, 50)
+
+                self.w2 = tce.Parameter(50, 50)
+                self.b2 = tce.Parameter(1, 50)
+
+                self.w3 = tce.Parameter(50, 2)
+                self.b3 = tce.Parameter(1, 2)
+
         """
         self.layer_manager = Layer_Manager()
         self.sequence = False
@@ -365,6 +382,42 @@ class Module:
             parameter.zero_grad()
 
     def predict(self, inputs) -> 'Tensor':
+        """
+       Here implements the predict function for module.
+
+       Parameter: inputs: 'Tensor'
+       Return: Tensor
+
+       It's necessary to overwrite predict function when calculate the output
+
+       Example:
+       class MyModule(tce.Module):
+
+           def __init__(self):
+               self.w1 = tce.Parameter(4, 50)
+               self.b1 = tce.Parameter(1, 50)
+
+               self.w2 = tce.Parameter(50, 50)
+               self.b2 = tce.Parameter(1, 50)
+
+               self.w3 = tce.Parameter(50, 2)
+               self.b3 = tce.Parameter(1, 2)
+
+           def predict(self, inputs):
+               z1 = inputs @ self.w1 + self.b1  # (400, 5)
+               a1 = tce.ReLU(z1)
+
+               z2 = a1 @ self.w2 + self.b2  # (400, 5)
+               a2 = tce.ReLU(z2)
+
+               z3 = a2 @ self.w3 + self.b3  # (400, 2)
+               y = tce.sigmoid(z3)
+               return y
+
+       You can overwrite both predict function and train function to dropout when deep learning
+       It's meaningless to overwrite either predict function or train function if you want to achieve dropout
+
+        """
         if not self.sequence:
             return self.train(inputs)
         else:
@@ -382,9 +435,20 @@ class Module:
                 metrics=None,
                 **kwargs) -> 'None':
         """
-        Compile your model in here.
-        Examples:
-        ---------
+        Here implements the compile function for module.
+
+        Parameters:
+        optimizer: You can choose an optimizer for you neural network
+
+        loss: You can define the loss between target output and the actual output
+
+        metrics；
+
+        **kwargs: You can define the learning rate for your neural network
+                  You can also define the parameter for the optimizer, which is usually default
+
+        Example:
+        model.compile(optimizer = 'adam', loss = 'square_loss', learning_rate = 0.01)
 
         """
         self.optimizer = optimizer
@@ -410,7 +474,35 @@ class Module:
             show_loss: bool = False,
             epochs_mean_loss: bool = False):
         """
+        Here implements the fit function for module
 
+        Parameter:
+        x: The input of the train data
+
+        y: The output of the train data
+
+        batch_size：The number of the date every time calculate the grad
+
+        epochs: The times of evolve
+
+        validation_split: The proportion of the train data you choose the train
+
+        validation_data: The test data for you neural network which has been trained
+
+        shuffle:
+
+        validation_freq:
+
+        show_acc_tr: Show the accuracy of train data
+
+        show_acc: Show the accuracy of test data
+
+        Example:
+        model.fit(x, y,  # input training data
+                  batch_size = 32,  # set batch_size and epochs
+                  epochs = 100,
+                  validation_split = 0.2,  # split 20% of trainingset as testset
+                  show_acc = True)  # show accuray per epoch
 
         """
         x = _ensure_tensor(x)
