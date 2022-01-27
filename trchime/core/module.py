@@ -495,9 +495,11 @@ class Module:
 
         show_acc_tr: optional, 'Bool', Whether to show the accuracy of train set of per epoch
 
-        show_acc: optional, 'Bool', Whether to show the accuracy of test data of per epoch
+        show_acc: optional, 'Bool', Whether to show the accuracy of test set of per epoch
 
         show_loss: optional, 'Bool', Whether to show the loss of test set of per epoch
+
+        epochs_mean_loss: optional, 'Bool', Whether to show the average loss of every batch
 
         Example:
         model.fit(x, y,  # input training data
