@@ -266,7 +266,6 @@ def transpose(t: 'Tensorable', *axes) -> 'Tensor':
     :param t:
     """
 
-
     t = _ensure_tensor(t)
 
     return _transpose(t, *axes)

@@ -260,6 +260,12 @@ class Tensor(tensor):
         """ remove self's dependency"""
         self._depends_on = []
 
+    def assign(self, val) -> 'None':
+        val = _ensure_array(val)
+        self._data = val
+        if self.requires_grad:
+            self.zero_grad()
+
     def assign_add(self, val) -> 'None':
         self.data += _ensure_array(val)
 
@@ -371,7 +377,7 @@ class Tensor(tensor):
             self._depends_on = []
 
     def non_depends_on(self) -> 'None':
-        """ Invalidaate tesnsor's depends_on property"""
+        """ Invalidate tensor's depends_on property"""
         self._depends_on = []
 
 

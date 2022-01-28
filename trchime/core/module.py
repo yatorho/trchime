@@ -336,7 +336,7 @@ class _Fitter:
 
 class Module:
 
-    def __init__(self):
+    def init(self):
         """
         test test
         Here implements the constructor for module.
@@ -394,6 +394,17 @@ class Module:
                 if not layer.bias.requires_grad:
                     yield layer.bias
 
+    def __getitem__(self, item):
+        val = getattr(self, item, None)
+        if isinstance(val, Tensor):
+            return val
+
+        elif val is None:
+            raise AttributeError(str(self.__class__), "model has no attribute:", item)
+
+        else:
+            warnings.warn("called a non-tensor member", FutureWarning)
+            return val
 
     def zero_grad(self):
         for parameter in self.parameters():
@@ -469,13 +480,10 @@ class Module:
         model.compile(optimizer = 'adam', loss = 'square_loss', learning_rate = 0.01)
 
         """
-        self.optimizer = optimizer
-        self.loss = loss
-        self.metrics = metrics
 
-        self._compile_file = {'optimizer': self.optimizer,
-                              'loss': self.loss,
-                              'metrics': self.metrics}
+        self._compile_file = {'optimizer': optimizer,
+                              'loss': loss,
+                              'metrics': metrics}
         self._compile_file.update(kwargs)
 
     def fit(self,
@@ -490,7 +498,8 @@ class Module:
             show_acc_tr: bool = False,
             show_acc: bool = False,
             show_loss: bool = False,
-            epochs_mean_loss: bool = False):
+            epochs_mean_loss: bool = False,
+            valid_inputs: bool = False):
         """
         Here implements the fit function for module
 
@@ -527,8 +536,20 @@ class Module:
                   show_acc = True)  # show accuracy per epoch
 
         """
-        x = _ensure_tensor(x)
-        y = _ensure_tensor(y)
+        if not valid_inputs:
+            x = _ensure_tensor(x)
+            y = _ensure_tensor(y)
+        else:
+            x = Tensor(1).reshape((1, 1))
+            y = Tensor(1).reshape((1, 1))
+            batch_size = 1
+            shuffle = False
+            validation_split = None
+            validation_data = None
+            validation_freq = 1
+            show_acc_tr = False
+            show_acc = False
+
 
         fitter = _Fitter(x,
                          y,
@@ -622,8 +643,14 @@ def _savemodel(model: 'Module', url: str, *args, **kwargs):
     :param kwargs:
     :return:
     """
+    model._compile_file = None
 
     for tensor in model.parameters():
+        tensor.non_depends_on()
+        if np.isnan(tensor.data).any():
+            raise ValueError("failed to save a model whose parameters has nan value")
+
+    for tensor in model.constants():
         tensor.non_depends_on()
         if np.isnan(tensor.data).any():
             raise ValueError("failed to save a model whose parameters has nan value")
