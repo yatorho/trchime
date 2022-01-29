@@ -5,13 +5,13 @@ from .gather import Arrayable, _ensure_array
 class Parameter(Tensor):
     def __init__(self, *shape) -> 'None':
 
-        data = (np.random.randn(*shape) - 0.5) * 0.1
+        data = (np.random.randn(*shape)) * 0.1
         super().__init__(data, requires_grad = True)
 
 class Variable(Tensor):
     def __init__(self, data: Arrayable = None, shape=None):
         if data is None:
-            data = (np.random.randn(*shape) - 0.5) * 0.1
+            data = (np.random.randn(*shape)) * 0.1
             super().__init__(data, requires_grad = True)
 
         else:
@@ -21,7 +21,7 @@ class Variable(Tensor):
 class Constant(Tensor):
     def __init__(self, data: Arrayable = None, shape=None):
         if data is None:
-            data = (np.random.randn(*shape) - 0.5) * 0.1
+            data = (np.random.randn(*shape)) * 0.1
             super().__init__(data)
 
         else:
