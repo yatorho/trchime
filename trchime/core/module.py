@@ -8,6 +8,7 @@ import numpy as np
 from .tensor import Tensor
 from .parameter import Parameter, Constant
 from ..call import ProgressBar, MessageBoard
+from ..call import AccuracyBoard, MultiClassificationAccuracyBoard, MCA_BOARD
 from typing import List, Tuple
 # noinspection PyProtectedMember
 from .gather import _ensure_tensor
@@ -30,7 +31,10 @@ class _Fitter:
                  show_acc_tr: bool = False,
                  show_acc: bool = False,
                  show_loss: bool = False,
-                 epochs_mean_loss: bool = False):
+                 epochs_mean_loss: bool = False,
+                 show_batch_loss: bool = False,
+                 show_batch_acc: bool = False,
+                 accuracy_board=MCA_BOARD):
         """
 
         :param shuffle:
@@ -66,6 +70,9 @@ class _Fitter:
         self.show_acc = show_acc
         self.show_loss = show_loss
         self.epochs_mean_loss = epochs_mean_loss
+        self.show_batch_loss = show_batch_loss
+        self.show_batch_acc = show_batch_acc
+        self.acc_board_f = accuracy_board
 
         self.pd = ProgressBar(65)
 
@@ -214,10 +221,11 @@ class _Fitter:
 
     def _fit(self, model: 'Module'):
         f = 0
+        index = 0
 
         for epoch in range(self.epoch):
             epoch_loss = 0
-            index = 0
+            epoch_acc = 0
             f += 1 / self.validation_freq
 
             for start in range(0, self.x_data.shape[0], self.batch_size):
@@ -233,31 +241,46 @@ class _Fitter:
                 self.loss.define_loss(predicted, actual, model)
                 self.loss.backward()
 
+                if self.show_batch_loss:
+                    print(' |  Loss: %10.5f' % self.loss.loss.data, end = "")
+
+                if self.show_acc_tr:
+                    self.accuracy_board.define_accuracy(predicted, actual, model)
+                    epoch_acc += self.accuracy_board.accuracy.data
+
+                    if self.show_batch_acc:
+                        print(' |  Acc: %5.2f%%' % (self.accuracy_board.accuracy.data * 100), end = "")
+
+                    self.accuracy_board.non_accuracy()
+
+                if self.show_batch_acc or self.show_batch_loss:
+                    print()
+
                 self.optimizer.step(model)
 
                 epoch_loss += self.loss.loss.data
                 index += 1
 
             if f >= 1:
-                f = 0
+
                 if self.epochs_mean_loss:
                     epoch_loss /= index
+                epoch_acc /= index
+
+                f = 0
+                index = 0
 
                 if not self.notestflag:
                     y_test_hat = model.predict(self.x_test)
-                    a = y_test_hat.argmax(axis = 1)
-                    b = self.y_test.argmax(axis = 1)
-                    c = (1 * (a == b)).mean()
+                    self.accuracy_board.define_accuracy(y_test_hat, self.y_test, model)
+                    c = self.accuracy_board.accuracy
+                    self.accuracy_board.non_accuracy()
 
                     if not self.show_loss:
                         if self.show_acc_tr:
-                            y_train_hat = model.predict(self.x_data)
-                            a1 = y_train_hat.argmax(axis = 1)
-                            b1 = self.y_data.argmax(axis = 1)
-                            c1 = (1 * (b1 == a1)).mean()
                             print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
                                   " |  Accuracy:  %5.2f%%" % (c.data * 100),
-                                  " |  Acc_tr: %5.2f%%" % (c1.data * 100))
+                                  " |  Acc_tr: %5.2f%%" % (epoch_acc * 100))
 
                         elif self.show_acc:
                             print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
@@ -270,15 +293,10 @@ class _Fitter:
                         self.loss.define_loss(y_test_hat, self.y_test, model)
 
                         if self.show_acc_tr:
-                            y_train_hat = model.predict(self.x_data)
-                            a1 = y_train_hat.argmax(axis = 1)
-                            b1 = self.y_data.argmax(axis = 1)
-                            c1 = (1 * (b1 == a1)).mean()
-
                             print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
                                   " |  loss_test: %12.5f" % self.loss.loss.data,
                                   " |  Accuracy: %5.2f%%" % (c.data * 100),
-                                  " |  Acc_tr: %5.2f%%" % (c1.data * 100))
+                                  " |  Acc_tr: %5.2f%%" % (epoch_acc * 100))
 
                         elif self.show_acc:
                             print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
@@ -291,7 +309,6 @@ class _Fitter:
 
                 else:
                     print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss)
-
 
     def fit(self, model: 'Module', compile):
         from ..nn import SGD_OPTIMIZER, SGDM_OPTIMIZER, ADAGRAD_OPTIMIZER, ADAM_OPTIMIZER, RMSPROP_OPTIMIZER
@@ -318,6 +335,11 @@ class _Fitter:
         elif isinstance(optimizer_f, Optimizer):
             self.optimizer = optimizer_f
 
+        if self.acc_board_f == MCA_BOARD:
+            self.accuracy_board = MultiClassificationAccuracyBoard()
+
+        elif isinstance(self.acc_board_f, AccuracyBoard):
+            self.accuracy_board = self.acc_board_f
 
         loss_f = compile.get('loss', MSELOSS)
 
@@ -499,7 +521,10 @@ class Module:
             show_acc: bool = False,
             show_loss: bool = False,
             epochs_mean_loss: bool = False,
-            valid_inputs: bool = False):
+            valid_inputs: bool = False,
+            show_batch_loss: bool = False,
+            show_batch_acc: bool = False,
+            accuracy_show=MCA_BOARD):
         """
         Here implements the fit function for module
 
@@ -550,7 +575,6 @@ class Module:
             show_acc_tr = False
             show_acc = False
 
-
         fitter = _Fitter(x,
                          y,
                          epochs,
@@ -562,7 +586,10 @@ class Module:
                          show_acc_tr,
                          show_acc,
                          show_loss,
-                         epochs_mean_loss)
+                         epochs_mean_loss,
+                         show_batch_loss,
+                         show_batch_acc,
+                         accuracy_show)
 
         if len(self.layer_manager.layers_list) > 0:
             self.__construct_grap(x.shape)
@@ -602,7 +629,6 @@ class Module:
 
         md.add_horizontal_line(full = 1)
         md.show()
-
 
     def __construct_grap(self, inputs_shape: tuple):
         self.layer_manager.construct_grap(inputs_shape)

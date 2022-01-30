@@ -1,5 +1,7 @@
 from typing import List
+from ..core.tensor import Tensor
 
+MCA_BOARD = 'Multi Classification Accuracy Board'
 
 class ProgressBar:
     """
@@ -72,3 +74,25 @@ class _line:
 
     def show(self):
         print(self.text)
+
+class AccuracyBoard:
+
+    def __init__(self, name: str, msg: str = None):
+        self.name = name
+        self.msg = msg
+        self.accuracy = None
+
+    def define_accuracy(self, predict, accuracy, model):
+        pass
+
+    def non_accuracy(self):
+        self.accuracy = None
+
+class MultiClassificationAccuracyBoard(AccuracyBoard):
+    def __init__(self):
+        super().__init__(MCA_BOARD)
+
+    def define_accuracy(self, predict: Tensor, accuracy: Tensor, model):
+        p_index = predict.argmax(axis = 1)
+        a_index = accuracy.argmax(axis = 1)
+        self.accuracy = (1 * (a_index == p_index)).mean()

@@ -35,7 +35,7 @@ x_train, x_test = x_train / 255, x_test / 255
 class MniModel(tce.Module):
 
     def __init__(self):
-        super().__init__()
+        self.init()
         self.w1 = tce.random.randn(784, 128, requires_grad = True) * 0.01
         # w1. non-depedns_on
         self.b1 = tce.random.randn(1, 128, requires_grad = True) * 0.01
