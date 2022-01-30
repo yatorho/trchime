@@ -102,9 +102,9 @@ class _Fitter:
         :return:
         """
         if not f:
-            print('\r' + self.pd(i) + msg, end = "")
+            print('\r' + self.pd(i) + msg, end="")
         else:
-            print('\r' + msg + self.pd(i), end = "")
+            print('\r' + msg + self.pd(i), end="")
 
     def _mean_square_loss_fit(self, model: 'Module', show_acc_tr: bool, show_acc: bool, freq) -> 'None':
         warnings.warn("`_mean_square_loss_fit` method has been deprecated. take `_fit` instead", DeprecationWarning)
@@ -135,14 +135,14 @@ class _Fitter:
                 f = 0
                 if not self.notestflag:
                     y_test_hat = model.predict(self.x_test)
-                    a = y_test_hat.argmax(axis = 1)
-                    b = self.y_test.argmax(axis = 1)
+                    a = y_test_hat.argmax(axis=1)
+                    b = self.y_test.argmax(axis=1)
                     c = (1 * (a == b)).mean()
 
                     if show_acc_tr:
                         y_train_hat = model.predict(self.x_data)
-                        a1 = y_train_hat.argmax(axis = 1)
-                        b1 = self.y_data.argmax(axis = 1)
+                        a1 = y_train_hat.argmax(axis=1)
+                        b1 = self.y_data.argmax(axis=1)
                         c1 = (1 * (b1 == a1)).mean()
                         print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
                               " |  Accuracy:  %5.2f%%" % (c.data * 100),
@@ -292,7 +292,6 @@ class _Fitter:
                 else:
                     print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss)
 
-
     def fit(self, model: 'Module', compile):
         from ..nn import SGD_OPTIMIZER, SGDM_OPTIMIZER, ADAGRAD_OPTIMIZER, ADAM_OPTIMIZER, RMSPROP_OPTIMIZER
         from ..nn import MSELOSS, CATEGORYLOSS
@@ -317,7 +316,6 @@ class _Fitter:
 
         elif isinstance(optimizer_f, Optimizer):
             self.optimizer = optimizer_f
-
 
         loss_f = compile.get('loss', MSELOSS)
 
@@ -414,7 +412,7 @@ class Module:
         """
        Here implements the predict function for module.
 
-       Parameter: inputs: 'Tensor'
+       Parameter: inputs: 'Tensorable'
        Return: Tensor
 
        It's necessary to overwrite predict function when calculate the output
@@ -443,7 +441,7 @@ class Module:
                y = tce.sigmoid(z3)
                return y
 
-       You can overwrite both predict function and train function to dropout when deep learning
+       It's feasible to overwrite both predict function and train function to dropout when deep learning
        It's meaningless to overwrite either predict function or train function if you want to achieve dropout
 
         """
@@ -467,11 +465,68 @@ class Module:
         Here implements the compile function for module.
 
         Parameters:
-        optimizer: You can choose an optimizer for you neural network
+        optimizer: You can choose an optimizer for you neural network or define a new optimizer
 
-        loss: You can define the loss between target output and the actual output
+        Example:
+        model.compile(optimizer = tce.nn.ADAM_OPTIMIZER,  # choose stochastic gradient descent optimizer
+                      loss = tce.nn.MSELOSS,  # set mean square loss function
+                      learning_rate = 0.1)  # set learning rate
 
-        metrics；
+        There are five optimizers in trchime\nn\optim.py
+
+        It's feasible to define a new optimizer
+
+        Example:
+        class MyOptimizer(tce.nn.optim.Optimizer):
+
+            def __init__(self):
+                super().__init__('my optimizer')  # define the name of the new-defined optimizer
+                self.lr = 0.1  # define the learning rate
+
+            def step(self, module) -> 'None':
+                for parameter in module.parameters():
+                parameter.assign_sub(self.lr*parameter.grad)  # define the learning way, here is the gradient descent
+
+        my_op = MyOptimizer
+
+        model.compile(optimizer = my_op,  # replace with the new optimizer
+                      loss = tce.nn.MSELOSS)
+
+        loss: You can define the loss function or define a new loss function
+
+        Example:
+        model.compile(optimizer=tce.nn.ADAM_OPTIMIZER,
+                      loss=tce.nn.MSELOSS,
+                      learning_rate=0.2)
+
+        There are three loss functions in trchime\nn\loss.py
+
+        It's feasible to define a new loss function
+
+        Example:
+        class MyLoss(tce.nn.loss.LOSS):
+
+            def __init__(self):
+                super().__init__("my loss")  # define the name of loss function
+
+            def define_loss(self, predicted: 'Tensor', actual: 'Tensor', model: 'Module' = None) -> None:
+
+                #  predicted: 'Tensorable': The predicted output
+                #  actual: 'Tensorable': The actual output
+
+                self.loss  = ((predicted-actual)**2).sum()
+
+                for parameter in model.parameters():  # model: optional, 'Module', It's feasible to call the parameters
+                                                                function to achieve regularization
+
+                    self.loss += (parameter ** 2).sum()
+
+
+        my_loss = MyLoss()
+
+        model.compile(optimizer=tce.nn.ADAM_OPTIMIZER,
+              loss=tce.nn.MSELOSS,
+              learning_rate=0.1)
 
         **kwargs: You can define the learning rate for your neural network
                   You can also define the parameter for the optimizer, which is usually default
@@ -608,6 +663,17 @@ class Module:
         self.layer_manager.construct_grap(inputs_shape)
 
     def add(self, layer: 'ConnectionLayer') -> None:
+        """
+        Here implements the add function for module
+
+        Parameter: layer: 'ConnectionLayer': You can define number of neuron in this layer and the activation function
+
+        Example:
+        model.add(tce.nn.Dense(nums = 32,  # number of the neuron
+                               activation = tce.nn.Activation.RELU_ACTIVATION))  # define activation function, there are
+                                                                                   eight activation functions in
+                                                                                   trchime\nn\layer.py
+        """
         self.layer_manager.add(layer)
 
     def forward(self, inputs: Tensor, allow_activate: bool = True) -> Tensor:
