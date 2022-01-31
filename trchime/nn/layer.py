@@ -8,14 +8,14 @@ from ..core.multitensor import sqrt
 
 
 class Activation:
-    TANH_ACTIVATION = 'HyperbolicTangent_active_function'
-    SIGMOID_ACTIVATION = 'Sigmoid_active_function'
-    RELU_ACTIVATION = 'RectifiedLLinearUnit_active_function'
-    LEAKY_RELU_ACTIVATION = 'LeakyRectifiedLLinearUnit_active_function'
-    SOFTPLUS_ACTIVATION = 'SoftPlus_active_function'
-    SOFTMAX_ACTIVATION = 'SoftMax_active_function'
-    ELU_ACTIVATION = 'ExponentialLinearUnits_active_function'
-    RELUX_ACTIVATION = 'RectifiedLLinearUnitX_active_function'
+    TANH_ACTIVATION = 'HyperbolicTangent_activation_function'
+    SIGMOID_ACTIVATION = 'Sigmoid_activation_function'
+    RELU_ACTIVATION = 'RectifiedLinearUnit_activation_function'
+    LEAKY_RELU_ACTIVATION = 'LeakyRectifiedLinearUnit_activation_function'
+    SOFTPLUS_ACTIVATION = 'SoftPlus_activation_function'
+    SOFTMAX_ACTIVATION = 'SoftMax_activation_function'
+    ELU_ACTIVATION = 'ExponentialLinearUnits_activation_function'
+    RELUX_ACTIVATION = 'RectifiedLinearUnitX_activation_function'
     NONE = 'NONE'
 
 

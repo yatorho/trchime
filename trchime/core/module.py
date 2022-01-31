@@ -109,9 +109,9 @@ class _Fitter:
         :return:
         """
         if not f:
-            print('\r' + self.pd(i) + msg, end="")
+            print('\r' + self.pd(i) + msg, end = "")
         else:
-            print('\r' + msg + self.pd(i), end="")
+            print('\r' + msg + self.pd(i), end = "")
 
     def _mean_square_loss_fit(self, model: 'Module', show_acc_tr: bool, show_acc: bool, freq) -> 'None':
         warnings.warn("`_mean_square_loss_fit` method has been deprecated. take `_fit` instead", DeprecationWarning)
@@ -142,14 +142,14 @@ class _Fitter:
                 f = 0
                 if not self.notestflag:
                     y_test_hat = model.predict(self.x_test)
-                    a = y_test_hat.argmax(axis=1)
-                    b = self.y_test.argmax(axis=1)
+                    a = y_test_hat.argmax(axis = 1)
+                    b = self.y_test.argmax(axis = 1)
                     c = (1 * (a == b)).mean()
 
                     if show_acc_tr:
                         y_train_hat = model.predict(self.x_data)
-                        a1 = y_train_hat.argmax(axis=1)
-                        b1 = self.y_data.argmax(axis=1)
+                        a1 = y_train_hat.argmax(axis = 1)
+                        b1 = self.y_data.argmax(axis = 1)
                         c1 = (1 * (b1 == a1)).mean()
                         print('\rEpoch: %5d' % epoch, " |  Loss: %12.5f" % epoch_loss,
                               " |  Accuracy:  %5.2f%%" % (c.data * 100),
@@ -358,17 +358,23 @@ class _Fitter:
 
 class Module:
 
+    def __init__(self):
+        self.init()
+
     def init(self):
         """
-        test test
         Here implements the constructor for module.
 
-        It's necessary to call constructor of parent class 'super().__init().__ ' when extend Module
+        You can initialize model's parameters here.
+
+        It's necessary to call `init` method when extend Module
 
         Example:
         class MyModule(tce.Module):
 
             def __init__(self):
+
+                self.init()  # It's necessary to call `init` method when extend Module
 
                 self.w1 = tce.Parameter(4, 50)
                 self.b1 = tce.Parameter(1, 50)
@@ -434,39 +440,45 @@ class Module:
 
     def predict(self, inputs) -> 'Tensor':
         """
-       Here implements the predict function for module.
+        Define the forward propagation of your model here and return model's output
+        It's necessary to override `predict` function when calculate the output
 
-       Parameter: inputs: 'Tensorable'
-       Return: Tensor
+        Parameter:
+            inputs: 'Tensor', input data
+            Return: 'Tensor', output data
 
-       It's necessary to overwrite predict function when calculate the output
+        Example:
+        class MyModule(tce.Module):
 
-       Example:
-       class MyModule(tce.Module):
+            def __init__(self):
 
-           def __init__(self):
-               self.w1 = tce.Parameter(4, 50)
-               self.b1 = tce.Parameter(1, 50)
+                self.init()
 
-               self.w2 = tce.Parameter(50, 50)
-               self.b2 = tce.Parameter(1, 50)
+                # randomly initialize parameters
+                self.w1 = tce.Parameter(4, 50)
+                self.b1 = tce.Parameter(1, 50)
 
-               self.w3 = tce.Parameter(50, 2)
-               self.b3 = tce.Parameter(1, 2)
+                self.w2 = tce.Parameter(50, 50)
+                self.b2 = tce.Parameter(1, 50)
 
-           def predict(self, inputs):
-               z1 = inputs @ self.w1 + self.b1  # (400, 5)
-               a1 = tce.ReLU(z1)
+                self.w3 = tce.Parameter(50, 2)
+                self.b3 = tce.Parameter(1, 2)
 
-               z2 = a1 @ self.w2 + self.b2  # (400, 5)
-               a2 = tce.ReLU(z2)
+            def predict(self, inputs):  # override `predict` method
+                # implements forward propagation for your moel
+                z1 = inputs @ self.w1 + self.b1  # (400, 5)
+                a1 = tce.ReLU(z1)
 
-               z3 = a2 @ self.w3 + self.b3  # (400, 2)
-               y = tce.sigmoid(z3)
-               return y
+                z2 = a1 @ self.w2 + self.b2  # (400, 5)
+                a2 = tce.ReLU(z2)
 
-       It's feasible to overwrite both predict function and train function to dropout when deep learning
-       It's meaningless to overwrite either predict function or train function if you want to achieve dropout
+                z3 = a2 @ self.w3 + self.b3  # (400, 2)
+                y = tce.sigmoid(z3)
+                return y  # return result
+
+        Also see:
+            train
+            forward
 
         """
         if not self.sequence:
@@ -483,86 +495,138 @@ class Module:
     def compile(self,
                 optimizer,
                 loss=None,
-                metrics=None,
                 **kwargs) -> 'None':
         """
-        Here implements the compile function for module.
+        Here compiles your model.
+
+        Notes: You can use the compile function to configure your model's optimizer parameters,
+               loss function, learning rate, etc.
 
         Parameters:
-        optimizer: You can choose an optimizer for you neural network or define a new optimizer
+        optimizer: a string or a custom optimizer. You can choose an optimizer  or
+                   define a new optimizer for you model.
+
+                   Trchime provides five optimizers for your training. You can pass strings of five enum types
+                   in tce.nn package as arguments.
+                   1. SGD_OPTIMIZER: Stochastic Gradient Descent Optimizer
+                   2. SGDM_OPTIMIZER: MomentumOptimizer:
+                   3. ADAGRAD_OPTIMIZER: Adaptive Gradient Optimizer
+                   4. RMSPROP_OPTIMIZER: Root Mean Square Prop Optimizer
+                   5. ADAM_OPTIMIZER: Adaptive Moment Estimation Optimizer
+
+                   You can also customize your own optimizer, which requires you to
+                   implement a class that inherits from `Optimizer` in the tce.nn package.
+                   You are required to override `__init__` and `step` method of parent class.
+
+        loss: a string or a custom loss. You can choose an loss function or define a new
+              loss function for your model.
+
+              Trchime provides three loss function for your training. You can pass strings of three enums types
+              in `tce.nn` package as arguments.
+              1. MSELOSS: mean_square_error_loss
+              1. CATEGORYLOSS: categorical_cross_entropy_loss
+              3. MAELOSS: mean_absolute_error_loss
+
+        **kwargs: Optional, You can configure some optional parameters of the optimizer,
+                  such as learning_rate, sgdm_beta, adam_corrected, etc.
+                  If not given, the optimizer will be initialized with default parameters.
+                  You can assign values to the following optional parameters:
+                  1. learning_rate:    float, default value is 0.01
+                  2. sgm_beta:    float, default value is 0.9
+                  3. rmsprop_beta:    float, default value is 0.9
+                  4. adam_beta1:    float, default value is 0.9
+                  5. adam_beta2:    float, default value is 0.9
+                  6. adam_corrected:     boolean, default value is False
+
 
         Example:
-        model.compile(optimizer = tce.nn.ADAM_OPTIMIZER,  # choose stochastic gradient descent optimizer
+        ==================================================================================
+        model = MyModel()  # instantiate your model
+        model.compile(optimizer = tce.nn.SGD_OPTIMIZER,  # choose stochastic gradient descent optimizer
                       loss = tce.nn.MSELOSS,  # set mean square loss function
                       learning_rate = 0.1)  # set learning rate
+        ---------------------------------------------------------------------------------
 
-        There are five optimizers in trchime\nn\optim.py
 
         It's feasible to define a new optimizer
 
         Example:
-        class MyOptimizer(tce.nn.optim.Optimizer):
+        ================================================================================
+        class MyOptimizer(tce.nn.Optimizer):
 
             def __init__(self):
                 super().__init__('my optimizer')  # define the name of the new-defined optimizer
-                self.lr = 0.1  # define the learning rate
+                self.lr = 0.1  # set learning rate
 
-            def step(self, module) -> 'None':
+            def step(self, module):
                 for parameter in module.parameters():
-                parameter.assign_sub(self.lr*parameter.grad)  # define the learning way, here is the gradient descent
+                    parameter.assign_sub(self.lr * parameter.grad)
+                    # define the learning way, here is just the gradient descent
 
-        my_op = MyOptimizer
+        model = MyModel()  # instantiate your model
+        my_op = MyOptimizer  # instantiate your optimizer
 
         model.compile(optimizer = my_op,  # replace with the new optimizer
                       loss = tce.nn.MSELOSS)
-
-        loss: You can define the loss function or define a new loss function
+        -----------------------------------------------------------------------------------
 
         Example:
-        model.compile(optimizer=tce.nn.ADAM_OPTIMIZER,
-                      loss=tce.nn.MSELOSS,
-                      learning_rate=0.2)
-
-        There are three loss functions in trchime\nn\loss.py
+        ================================================================================
+        model = MyModel()
+        model.compile(optimizer=tce.nn.ADAM_OPTIMIZER,  # choose Adaptive Moment Estimation Optimizer
+                      loss=tce.nn.CATEGORYLOSS,  # choose categorical cross entropy loss function
+                      learning_rate=0.2,  # set learnin_rate
+                      adam_beta1 = 0.95,
+                      adam_corrected = True)  # change default arguments for adam optimizer
+        --------------------------------------------------------------------------------
 
         It's feasible to define a new loss function
 
         Example:
+        ===============================================================================
         class MyLoss(tce.nn.loss.LOSS):
 
             def __init__(self):
                 super().__init__("my loss")  # define the name of loss function
 
-            def define_loss(self, predicted: 'Tensor', actual: 'Tensor', model: 'Module' = None) -> None:
+            def define_loss(self, predicted: 'Tensor', actual: 'Tensor') -> None:
+                '''
+                Overrider this method to define your loss function.
+                You are required to declare `self.loss`.
 
-                #  predicted: 'Tensorable': The predicted output
-                #  actual: 'Tensorable': The actual output
+                Parameters:
+                predicted: The predicted output
+                actual: The actual output
+                model: training model
 
-                self.loss  = ((predicted-actual)**2).sum()
+                You can get information to define you loss function from above three parameters.
 
-                for parameter in model.parameters():  # model: optional, 'Module', It's feasible to call the parameters
-                                                                function to achieve regularization
+                For examples, your can implements square sum error loss as:
+                    >>> self.loss = ((predicted - actual) ** 2).sum()
 
+                '''
+
+                self.loss  = ((predicted-actual)**2).sum()  # define square sum error loss
+
+                for parameter in model.parameters():
+                    # model.parameters would return an iterator which contain all trainable parameters in your model
                     self.loss += (parameter ** 2).sum()
+                    # implements L1 regularization for your model
 
-
-        my_loss = MyLoss()
+        model = MyModel()  # instantiate your model
+        my_loss = MyLoss()  # instantiate your loss class
 
         model.compile(optimizer=tce.nn.ADAM_OPTIMIZER,
-              loss=tce.nn.MSELOSS,
-              learning_rate=0.1)
-
-        **kwargs: You can define the learning rate for your neural network
-                  You can also define the parameter for the optimizer, which is usually default
-
-        Example:
-        model.compile(optimizer = 'adam', loss = 'square_loss', learning_rate = 0.01)
+                      loss=my_loss,  # replace with new loss
+                      learning_rate=0.1)
+        ---------------------------------------------------------------------------------
+        Also see:
+        trchime/examples/xxxx.py
 
         """
 
         self._compile_file = {'optimizer': optimizer,
-                              'loss': loss,
-                              'metrics': metrics}
+                              'loss': loss}
         self._compile_file.update(kwargs)
 
     def fit(self,
@@ -583,32 +647,59 @@ class Module:
             show_batch_acc: bool = False,
             accuracy_show=MCA_BOARD):
         """
-        Here implements the fit function for module
+        Here implements the fit function for model. Your model would be trained from here.
 
-        Parameter:
-        x: 'Tensorable', The input of the train set
+        Parameters:
+        x: 'Tensorable', The input of the training set
 
-        y: Tensorable', The output of the train set
+        y: Tensorable', The output of the training set
 
-        batch_size：optional, 'Integer', batch size
+        batch_size：optional, 'Integer', batch size.
 
-        epochs: optional, 'Integer', The times of evolve
+        epochs: optional, 'Integer', The times of iteration. If not given, default value is 1
 
-        validation_split: optional, 'Float', The proportion of the train set chosen as test set
+        validation_split: optional, 'Float', The proportion of the training set chosen as test set.
 
         validation_data: optional, 'Tensorable', The test set for neural network which has been trained
 
-        shuffle: optional, 'Bool', Whether to shuffle the inout of train set and test set
+        shuffle: optional, 'Bool', Whether to shuffle the inout of training set and test set.
+                 If not given, default value is True
 
-        validation_freq: optional, 'Integer', Change the frequency of showing the accuracy of per epoch
+        validation_freq: optional, 'Integer', The frequency of showing the accuracy of per epoch.
+                         If not given, default value is 1.
 
-        show_acc_tr: optional, 'Bool', Whether to show the accuracy of train set of per epoch
+        show_acc_tr: optional, 'Bool', Whether to show the accuracy of train set of per epoch. Default value is False.
 
-        show_acc: optional, 'Bool', Whether to show the accuracy of test set of per epoch
+        show_acc: optional, 'Bool', Whether to show the accuracy of test set of per epoch. Default value is False.
 
-        show_loss: optional, 'Bool', Whether to show the loss of test set of per epoch
+        show_loss: optional, 'Bool', Whether to show the loss of test set of per epoch. Default value is False.
 
-        epochs_mean_loss: optional, 'Bool', Whether to show the average loss of every batch
+        epochs_mean_loss: optional, 'Bool', Whether to show the average loss of epochs. Default value is False.
+
+        valid_inputs: optional, 'Bool', default value is False.
+                      Whether invalidate your input training set. Please ensure the `predict` method of your model
+                      never uses the arguments `inputs` before you assign valid_inputs with `True`.
+
+        show_batch_loss: optional, 'Bool', default value is False. Whether show loss per batch.
+
+        show_batch_acc: optional, 'Bool', default value is False. Whether show accuracy per batch.
+
+        accuracy_show: optional, 'AccuracyBoard', default value is MCA_BOARD.
+                       Trchime will treat your model as a multi-class network by default
+                       and calculate the accuracy of your model output.
+                       You can also customize the calculation method of the accuracy of your model output.
+
+        Notes:
+        1. Generally, you only need to assign value to anyone of `validation_split` or `validation_data`
+           If your assign values to both of them, only `validation_data` would work.'
+
+        2. The frequency of showing accuracy of test set up to once a epoch.
+
+        3. Please ensure the `predict` method of your model never uses the arguments `inputs`
+           before you assign valid_inputs with `True`.
+
+        4. More details about customizing your own accuracy's calculation please see:
+           trchime/examples/xxxx.py
 
         Example:
         model.fit(x, y,  # input training data
@@ -616,6 +707,7 @@ class Module:
                   epochs = 100,
                   validation_split = 0.2,  # split 20% of training set as test set
                   show_acc = True)  # show accuracy per epoch
+        More examples please see trchime/examples/
 
         """
         if not valid_inputs:
@@ -692,15 +784,44 @@ class Module:
 
     def add(self, layer: 'ConnectionLayer') -> None:
         """
-        Here implements the add function for module
+        Here implements the add function for module.
+        This is how the sequence constructs the model.
+        You can build a network by adding a forward propagation layer to your network through the `add` method.
 
-        Parameter: layer: 'ConnectionLayer': You can define number of neuron in this layer and the activation function
+        Parameter:
+        layer: 'ConnectionLayer': You can define number of neuron in this layer and the activation function
 
-        Example:
-        model.add(tce.nn.Dense(nums = 32,  # number of the neuron
-                               activation = tce.nn.Activation.RELU_ACTIVATION))  # define activation function, there are
-                                                                                   eight activation functions in
-                                                                                   trchime\nn\layer.py
+                Trchime provides some computing layers:
+                1. Dense:
+                2. Batch_normalize_layer:
+                3. Flatten:
+                4. Convolution_layer:
+                5. MaxPooling_layer:
+                6. AveragePool_layer:
+
+                Trchime provides some activation function for computing layer in enum class `Activation`:
+                1. Activation.TANH_ACTIVATION: hyperbolic Tangent activation function
+                2. Activation.SIGMOID_ACTIVATION: sigmoid activation function
+                3. Activation.RELU_ACTIVATION: rectified linear unit activation function
+                4. Activation.LEAKY_RELU_ACTIVATION: leaky rectified linear unit activation function
+                5. Activation.SOFTPLUS_ACTIVATION: softplus activation function
+                6. Activation.SOFTMAX_ACTIVATION: softmax activation function
+                7. Activation.ELU_ACTIVATION: exponential linear units activation function
+                8. Activation.RELUX_ACTIVATION: rectified linear unit x activation function
+                9. Activation.NONE: set no activation function
+
+        Example:  # simple network
+            model = tce.Module()
+            model.init()
+            model.add(tce.nn.Dense(nums = 32,  # number of the neuron
+                                   activation = tce.nn.Activation.RELU_ACTIVATION))  # define relu activation function
+
+            model.add(tce.nn.Dense(nums = 4,  # number of the neuron
+                                   activation = tce.nn.Activation.SOFTMAX_ACTIVATION))  # define softmax activation function
+
+        More examples: trchime/examples/4x32x24x2 network.py
+                       trchime/examples/xxxx.py
+
         """
         self.layer_manager.add(layer)
 
