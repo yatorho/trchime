@@ -1,0 +1,14 @@
+/.idea/
+NST/
+datasets/
+face/
+trchime/__pycache__/
+trchime/call/__pycache__/
+trchime/core/__pycache__/
+trchime/core/dtype/__pycache__/
+trchime/core/gather/__pycache__/
+trchime/core/initial/__pycache__/
+trchime/datasets/__pycache__/
+trchime/nn/__pycache__/
+trchime/random/__pycache__/
+vgg/
