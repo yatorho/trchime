@@ -517,11 +517,337 @@ In `Trchime`, the operation functions in tensor are mainly stored in the `multit
 
 ## Neural Net 
 
+In `Trchime`, there are two ways to  construct models. One is sequence. Another is customizing. 
+
+### module
+
+`compile`:
+
+- Notes: You can use the compile function to configure your model's optimizer parameters,
+  loss function, learning rate, etc.
+
+- Parameters: optimizer: a string or a custom optimizer. You can choose an optimizer or
+
+  define a new optimizer for you model.
+  Trchime provides five optimizers for your training. You can pass strings of five enum types in tce.nn package as arguments. 1. SGD_OPTIMIZER: Stochastic Gradient Descent Optimizer 2. SGDM_OPTIMIZER: MomentumOptimizer: 3. ADAGRAD_OPTIMIZER: Adaptive Gradient Optimizer 4. RMSPROP_OPTIMIZER: Root Mean Square Prop Optimizer 5. ADAM_OPTIMIZER: Adaptive Moment Estimation Optimizer
+  You can also customize your own optimizer, which requires you to implement a class that inherits from Optimizer in the tce.nn package. You are required to override __init__ and step method of parent class.
+
+- loss: a string or a custom loss. You can choose an loss function or define a new
+    loss function for your model.
+    Trchime provides three loss function for your training. You can pass strings of three enums types in tce.nn package as arguments. 1. MSELOSS: mean_square_error_loss 1. CATEGORYLOSS: categorical_cross_entropy_loss 3. MAELOSS: mean_absolute_error_loss
+    
+- **kwargs: Optional, You can configure some optional parameters of the optimizer,
+    such as learning_rate, sgdm_beta, adam_corrected, etc. If not given, the optimizer will be initialized with default parameters. You can assign values to the following optional parameters: 1. learning_rate: float, default value is 0.01 2. sgm_beta: float, default value is 0.9 3. rmsprop_beta: float, default value is 0.9 4. adam_beta1: float, default value is 0.9 5. adam_beta2: float, default value is 0.9 6. adam_corrected: boolean, default value is False
+    
+    examples:
+    
+    ```python
+    model = MyModel()  # instantiate your model
+            model.compile(optimizer = tce.nn.SGD_OPTIMIZER, 
+                          # choose stochastic gradient descent optimizer
+                          loss = tce.nn.MSELOSS,  # set mean square loss function
+                          learning_rate = 0.1)  # set learning rate
+    ```
+    
+    ```python
+    class MyOptimizer(tce.nn.Optimizer):
+    
+                def __init__(self):
+                    super().__init__('my optimizer') 
+                    # define the name of the new-defined optimizer
+                    self.lr = 0.1  # set learning rate
+    
+                def step(self, module):
+                    for parameter in module.parameters():
+                        parameter.assign_sub(self.lr * parameter.grad)
+                        # define the learning way, here is just the gradient descent
+    
+            model = MyModel()  # instantiate your model
+            my_op = MyOptimizer  # instantiate your optimizer
+    
+            model.compile(optimizer = my_op,  # replace with the new optimizer
+                          loss = tce.nn.MSELOSS)
+    ```
+    
+    ```python
+    model = MyModel()
+            model.compile(optimizer=tce.nn.ADAM_OPTIMIZER,  
+                          # choose Adaptive Moment Estimation Optimizer
+                          loss=tce.nn.CATEGORYLOSS,  
+                          # choose categorical cross entropy loss function
+                          learning_rate=0.2,  # set learnin_rate
+                          adam_beta1 = 0.95,
+                          adam_corrected = True)  
+        					# change default arguments for adam optimizer
+    ```
+    
+    ```python
+    class MyLoss(tce.nn.loss.LOSS):
+    
+                def __init__(self):
+                    super().__init__("my loss")  # define the name of loss function
+    
+                def define_loss(self, predicted: 'Tensor', actual: 'Tensor') -> None:
+                    '''
+                    Overrider this method to define your loss function.
+                    You are required to declare `self.loss`.
+    
+                    Parameters:
+                    predicted: The predicted output
+                    actual: The actual output
+                    model: training model
+    
+                    You can get information to define you loss function from above three parameters.
+    
+                    For examples, your can implements square sum error loss as:
+                        >>> self.loss = ((predicted - actual) ** 2).sum()
+    
+                    '''
+    
+                    self.loss  = ((predicted-actual)**2).sum()  
+                    # define square sum error loss
+    
+                    for parameter in model.parameters():
+                        # model.parameters would return an iterator which contain all trainable parameters in your model
+                        self.loss += (parameter ** 2).sum()
+                        # implements L1 regularization for your model
+    
+            model = MyModel()  # instantiate your model
+            my_loss = MyLoss()  # instantiate your loss class
+    
+            model.compile(optimizer=tce.nn.ADAM_OPTIMIZER,
+                          loss=my_loss,  # replace with new loss
+                          learning_rate=0.1)
+    ```
+    
+    Also see:
+    
+    [examples](examples/) 
+
+`fit`
+
+- Notes: our model would be trained from here.
+
+- Parameters: 
+
+  x: 'Tensorable', The input of the training set
+  y: Tensorable', The output of the training set
+  batch_size：optional, 'Integer', batch size.
+  epochs: optional, 'Integer', The times of iteration. If not given, default value is 1
+  validation_split: optional, 'Float', The proportion of the training set chosen as test set.
+  validation_data: optional, 'Tensorable', The test set for neural network which has been trained
+  shuffle: optional, 'Bool', Whether to shuffle the inout of training set and test set.
+  If not given, default value is True
+  validation_freq: optional, 'Integer', The frequency of showing the accuracy of per epoch.
+  If not given, default value is 1.
+  show_acc_tr: optional, 'Bool', Whether to show the accuracy of train set of per epoch. Default value is False.
+  show_acc: optional, 'Bool', Whether to show the accuracy of test set of per epoch. Default value is False.
+  show_loss: optional, 'Bool', Whether to show the loss of test set of per epoch. Default value is False.
+  epochs_mean_loss: optional, 'Bool', Whether to show the average loss of epochs. Default value is False.
+  valid_inputs: optional, 'Bool', default value is False.
+  Whether invalidate your input training set. Please ensure the predict method of your model never uses the arguments inputs before you assign valid_inputs with True.
+  show_batch_loss: optional, 'Bool', default value is False. Whether show loss per batch.
+  show_batch_acc: optional, 'Bool', default value is False. Whether show accuracy per batch.
+  accuracy_show: optional, 'AccuracyBoard', default value is MCA_BOARD.
+  Trchime will treat your model as a multi-class network by default and calculate the accuracy of your model output. You can also customize the calculation method of the accuracy of your model output.
+
+- Notes: 
+
+  1. Generally, you only need to assign value to anyone of validation_split or validation_data
+     If your assign values to both of them, only validation_data would work.'
+
+  2. The frequency of showing accuracy of test set up to once a epoch.
+  3. Please ensure the predict method of your model never uses the arguments inputs before you assign valid_inputs with True.
+  4. More details about customizing your own accuracy's calculation please see: trchime/examples/xxxx.py
+
+- Example: 
+  
+  ```python
+  model.fit(x, y,  # input training data
+                    batch_size = 32,  # set batch_size and epochs
+                    epochs = 100,
+                    validation_split = 0.2,  # split 20% of training set as test set
+                    show_acc = True)  # show accuracy per epoch
+  ```
+  
+- More examples please see [examples](examples/)
+
+`add`:
+
+- Here implements the add function for module. This is how the sequence constructs the model. You can build a network by adding a forward propagation layer to your network through the add method.
+
+- layer: ['ConnectionLayer'](trchime/nn/layer.py): You can define number of neuron in this layer and the activation function
+
+  Trchime provides some computing layers: 
+
+  1.Dense: 
+  2.Batch_normalize_layer: 
+  3.Flatten: 
+  4.Convolution_layer: 
+  5.MaxPooling_layer: 
+  6.AveragePool_layer:
+
+  Trchime provides some activation function for computing layer in enum class Activation: 
+  1.Activation.TANH_ACTIVATION: hyperbolic Tangent activation function   
+  2.Activation.SIGMOID_ACTIVATION: sigmoid activation function 
+  3.Activation.RELU_ACTIVATION: rectified linear unit activation function 
+  4.Activation.LEAKY_RELU_ACTIVATION: leaky rectified linear unit activation function 
+  5.Activation.SOFTPLUS_ACTIVATION: softplus activation function 
+  6.Activation.SOFTMAX_ACTIVATION: softmax activation function 
+  7.Activation.ELU_ACTIVATION: exponential linear units activation function 
+  8.Activation.RELUX_ACTIVATION: rectified linear unit x activation function 
+  9.Activation.NONE: set no activation function
+
+- example
+
+  ```python
+  model = tce.Module()
+              model.init()
+              model.add(tce.nn.Dense(nums = 32,  # number of the neuron
+                                     activation = tce.nn.Activation.RELU_ACTIVATION))  # define relu activation function
+  
+              model.add(tce.nn.Dense(nums = 4,  # number of the neuron
+                                     activation = tce.nn.Activation.SOFTMAX_ACTIVATION))  # define softmax activation function
+  ```
+
+- more example
+
+  [4x32x24x2network](examples\4x16x16x2 network.py)
+
+build 4x16x16x2 network:
+
+```python
+import trchime as tce
 
 
-### moudle
+def get_dataset(p_sum):
+    """
+    Produce dataset for 2 classification problem.
+    Generate some points in 4-dimensional space and distribute them
+    to 2 labels.
+    if points are in unit boll of 4-dimension space, they would
+    be marked as label 1.
+    If not, they would be marked as label 2
+    """
+    x_train = 2 * (tce.random.random((p_sum, 4)) - 0.5)
+    y_train = tce.zeros((p_sum, 2))
 
+    for i in range(p_sum):
+        if (tce.sum(x_train[i, :] ** 2) < 1).data:  # in -> labels: [0, 1]
+            y_train[i, 0] = 0
+            y_train[i, 1] = 1
+        else:  # out -> labels: [1, 0]
+            y_train[i, 0] = 1
+            y_train[i, 1] = 0
 
+    return x_train, y_train
 
+# construct your model by inherit class `tce.Module`
+# you need to overwrite two methods
+class unit_Model(tce.Module):
+    def __init__(self):
+        self.init()  # It's necessary to call `init` method when extend Module
+        # initialize paramters' matrix randomly
+        self.w1 = tce.random.randn(4, 16, requires_grad = True) * 0.1
+        self.b1 = tce.random.randn(1, 16, requires_grad = True) * 0.1
 
+        self.w2 = tce.random.randn(16, 16, requires_grad = True) * 0.1
+        self.b2 = tce.random.randn(1, 16, requires_grad = True) * 0.1
+
+        self.w3 = tce.random.randn(16, 2, requires_grad = True) * 0.1
+        self.b3 = tce.random.randn(1, 2, requires_grad = True) * 0.1
+
+    def predict(self, inputs):
+        # define your forward model here
+        # 4x16x16x2
+        z1 = inputs @ self.w1 + self.b1
+        a1 = tce.ReLU(z1)
+
+        z2 = a1 @ self.w2 + self.b2
+        a2 = tce.ReLU(z2)
+
+        z3 = a2 @ self.w3 + self.b3
+        return tce.sigmoid(z3)  # output layer use sigmoid activate function
+
+# collect dataset
+points_sum = 1000
+x, y = get_dataset(points_sum)
+
+# instantiate your model
+model = unit_Model()
+
+# compile your model
+model.compile(optimizer = tce.nn.ADAM_OPTIMIZER,  # choose stochastic gradient descent optimizer
+              loss = tce.nn.MSELOSS,  # set mean square loss function
+              learning_rate = 0.1)  # set learning rate
+
+# train your model
+model.fit(x, y,  # input training data
+          batch_size = 32,  # set batch_size and epochs
+          epochs = 100,
+          validation_split = 0.2,  # split 20% of trainingset as testset
+          show_acc = True)  # show accuracy per epoch
+
+```
+
+build 4x32x24x2 network in sequence:
+
+```python
+import trchime as tce
+import os
+
+def get_dataset(p_sum):
+    """
+    Produce dataset for 2 classification problem.
+    Generate some points in 4-dimensional space and distribute them
+    to 2 labels.
+    if points are in unit boll of 4-dimension space, they would
+    be marked as label 1.
+    If not, they would be marked as label 2
+    """
+    x_train = 5 * (tce.random.random((p_sum, 4)) - 0.5)
+    y_train = tce.zeros((p_sum, 2))
+
+    for i in range(p_sum):
+        if (tce.sum(x_train[i, :] ** 2) < 1).data:  # in -> labels: [0, 1]
+            y_train[i, 0] = 0
+            y_train[i, 1] = 1
+        else:  # out -> labels: [1, 0]
+            y_train[i, 0] = 1
+            y_train[i, 1] = 0
+
+    return x_train, y_train
+
+# collect dataset
+points_sum = 2000
+x, y = get_dataset(points_sum)
+
+model_save_path ='4x32x24x2network.pkl'
+
+if os.path.exists(model_save_path):
+    model = tce.loadmodel(model_save_path)
+else:
+    # instantiate your model
+    model = tce.Module()
+    # add some computing layer for your model
+    model.add(tce.nn.Dense(nums = 32,
+                           activation = tce.nn.Activation.RELU_ACTIVATION))
+    model.add(tce.nn.Dense(nums = 24,
+                           activation = tce.nn.Activation.RELU_ACTIVATION))
+    model.add(tce.nn.Dense(nums = 2,
+                           activation = tce.nn.Activation.SIGMOID_ACTIVATION))
+
+# compile your model
+model.compile(optimizer = tce.nn.ADAM_OPTIMIZER, # choose adam optimizer 
+              loss = tce.nn.MSELOSS)  # set mean square loss function
+
+# train your model
+model.fit(x, y,
+          batch_size = 32,
+          epochs = 50,
+          validation_split = 0.3,  # split 30% of trainingsets as testset
+          show_acc_tr = True)
+
+tce.savemodel(model, url = model_save_path)
+```
 

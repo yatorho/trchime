@@ -22,12 +22,27 @@ def sum(t: 'Tensorable', axis=None, keepdims: bool = False) -> 'Tensor':
     """
     Takes a tensor and returns the tensor
     that's the sum of all its elements.
-    :param keepdims:
-    :param axis:
-    :param t:
+    Output Tensor's requires_grad is True when input Tensor's requires_grad is True
+
+    :param keepdims:Whether to reserve the reduced dimension in the output Tensor.
+    :param axis:optional, int, if not given, default value is None
+    By default, sum all elements of x and return a Tensor with a single element.
+    The dimensions along which the sum is performed.
+    :param t: input Tensor
+
     :return: Tensor(data,
                     requires_grad,
                     depends_on)
+    For examples
+    ------------
+    >>> import trchime as tce
+    >>> a = tce.Tensor([[1,2,3,4,5,6,7,8,9],[2,2,2,2,2,2,2,2,2]], requires_grad=True)
+    >>> tce.sum(a)
+    Tensor(
+    45, requires_grad=True, dtype=int32)
+    >>> tce.sum(a, axis = 0, keepdims = True)
+    Tensor(
+    [[ 3  4  5  6  7  8  9 10 11]], requires_grad=True, dtype=int32)
     """
     t = _ensure_tensor(t)
 
@@ -36,12 +51,36 @@ def sum(t: 'Tensorable', axis=None, keepdims: bool = False) -> 'Tensor':
 
 def var(t: 'Tensorable', axis: int = None, ddof: int = 0, keepdims: bool = False) -> 'Tensor':
     """
+    Computes the variance of x along axis .
+    Output Tensor's requires_grad is True when input Tensor's requires_grad is True
 
-    :param t:
-    :param axis:
-    :param ddof:
-    :param keepdims:
-    :return:
+    Parameters
+    ----------
+    t:input Tensor
+    axis: optional, int, if not given, default value is None.
+    By default. variance is calculated over all elements of x.
+    The axis along which to perform variance calculations.
+    ddof:int, optional
+    Delta Degrees of Freedom”: the divisor used in the calculation is N - ddof,
+    where N represents the number of elements. By default ddof is zero.
+    keepdims:
+
+    Returns
+    -------
+    Returns the variance of the array elements, a measure of the spread of a distribution.
+    The variance is computed for the flattened array by default, otherwise over the specified axis.
+
+    For examples
+    ------------
+    >>> import trchime as tce
+    >>> a = tce.Tensor([0,1,0,1,2,3], requires_grad = True)
+    >>> tce.var(a)
+    Tensor(
+    1.1388888888888888, requires_grad=True, dtype=float64)
+    >>> b = tce.Tensor([0,1,0,1,2,3], requires_grad = False)
+    >>> tce.var(b)
+    Tensor(
+    1.1388888888888888, requires_grad=False, dtype=float64)
     """
     t = _ensure_tensor(t)
 
@@ -52,15 +91,35 @@ def mean(t: 'Tensorable', axis=None, keepdims: bool = False) -> 'Tensor':
     """
     Takes a tensor and returns the tensor
     that's the mean of all its elements.
-    :param keepdims:
-    :param axis:
-    :param t:
-    :return: Tensor(data,
-                    requires_grad,
-                    depends_on)
+
+    :param keepdims: optional, bool, if not given, default value is False
+    Whether to reserve the reduced dimension(s) in the output Tensor.
+    :param axis: optional, int, if not given, default value is None.
+    The axis along which to perform mean calculations.
+    :param t: input Tensor
+
+    Returns
+    ------
+    Tensor, results of average along axis of x, with the same data type as x.
+
+    For examples
+    ------------
+    >>> import trchime as tce
+    >>> a = tce.Tensor([[1,2],[2,5],[3,6],[4,9]])
+    >>> b = tce.mean(a, axis = 0)
+    >>> b
+    Tensor(
+    [2.5 5.5], requires_grad=False, dtype=float64)
+    >>> c = tce.mean(a)
+    >>> c
+    Tensor(
+    4.0, requires_grad=False, dtype=float64)
+
+    See Also
+    --------
+    min
+    max
     """
-    # t = ensure_tensor(t)
-    # return t.sum(axis = axis, keepdims = keepdims) / np.size(t.data, axis = axis)
 
     t = _ensure_tensor(t)
     return _mean(t = t, axis = axis, keepdims = keepdims)
@@ -69,44 +128,23 @@ def mean(t: 'Tensorable', axis=None, keepdims: bool = False) -> 'Tensor':
 def add(t1: 'Tensorable', t2: 'Tensorable') -> 'Tensor':
     """
     Here implemention of the add operation for Tensor.
-    if t1 + t2 = t3, just:
-    t3.data = t1.data + t1.data
-    t3.requires_grad is true only command t1's or t2's requires_grad
-    is true.
-
-    t3.dependency is a List[Denpendency], maually append when t1, t2 is
-    requires gradient.
-
-    The gradient function:
-    if t1 = [1, 2, 3], t2 = [4, 5, 6], then
-    t3 = t1 + t2 = [5, 7, 9]
-    when t1 = [1+e, 2, 3] => t3 = [5+e, 7, 9]
-    which means the grad of t1, t2 is just the same as
-    t3's grad.
-
-    Especially, give a thought to the tensor's broadcasting operation.
-
-    What's broadcasting:
-    1. t1,2 has different ndims:
-    1). t1 = 1, t2= [1, 2, 3] => t3 = t1 + t2 = [2, 3, 4]
-    2). t1 = [1, 2, 3], t2 = [[1, 2, 3], [4, 5, 6]]
-        => t3 = t1 + t2 = [[2, 4, 6], [5, 6, 9]]
-    2. t1,2 has same ndims:
-    1). t1 = [1], t2 = [1, 2, 3] => t3 = t1 + t2 = [2, 3, 4]
-    2). t2 = [[1], [2]], t3 = [[1, 2, 3], [4, 5, 6]]
-        => t3 = t1 + t2 = [[2, 3, 4], [6, 7, 8]]
-
-    When first case happened, the grad of t1[i] should be the
-    sum of t3's grad[i].
-    When second case happened, the grad of t1[i] should be
-    sum of t3.grad[i] where length of ith dims of t1 should be
-    signle.
+    The output Tensor's requires_grad is True when t1's requires_grad is True or t2's requires_grad is True.
 
     :param t1: addend tensor1
     :param t2: addend tensor2
+
     :return: Tensor(data,
                   requires_grad,
                   depends_on)
+
+    For examples
+    ------------
+    >>> import trchime as tce
+    >>> a = tce.Tensor([1,4,5], requires_grad = True)
+    >>> b = tce.Tensor([2,7,9], requires_grad = False)
+    >>> tce.add(a,b)
+    Tensor(
+    [ 3 11 14], requires_grad=True, dtype=int32)
     """
 
     t1 = _ensure_tensor(t1)
@@ -118,9 +156,21 @@ def add(t1: 'Tensorable', t2: 'Tensorable') -> 'Tensor':
 def mul(t1: 'Tensorable', t2: 'Tensorable') -> 'Tensor':
     """
     Here implemention of tensor's multiplication.
-    :param t1:
-    :param t2:
-    :return:
+    The output Tensor's requires_grad is True when t1's requires_grad is True or t2's requires_grad is True.
+
+    :param t1: input Tensor
+    :param t2: input Tensor
+    :return: a 'Tensor' reflecting the result of t1 * t2
+
+    For examples
+    ------------
+    >>> import trchime as tce
+    >>> a = tce.Tensor([[1, 2], [4, 3]], requires_grad=True)
+    >>> b = tce.Tensor([[5, 6], [7, 9]], requires_grad=False)
+    >>> tce.mul(a,b)
+    Tensor(
+    [[ 5 12]
+    [28 27]], requires_grad=True, dtype=int32)
     """
 
     t1 = _ensure_tensor(t1)
@@ -130,7 +180,37 @@ def mul(t1: 'Tensorable', t2: 'Tensorable') -> 'Tensor':
 
 
 def pow(t: 'Tensorable', power: 'Tensorable') -> 'Tensor':
+    """
+    gets called for operations: t^(power)
+    The output Tensor's requires_grad is True when t1's requires_grad is True.
+    ----------
+    t: input Tensor
+    power: int/float/Tensor
+    If it is a 'Tensor', its data type should be the same as x.
 
+    Returns
+    -------
+    A 'Tensor'. A location into which the result is stored. Its dimension and data type are the same as x
+
+    For examples:
+    >>> import trchime as tce
+    >>> a = tce.Tensor([[1, 2], [3, 4], [5, 6], [7, 8]])
+    >>> b = tce.pow(a, 2)
+    >>> b
+    Tensor(
+    [[ 1  4]
+    [ 9 16]
+    [25 36]
+    [49 64]], requires_grad=False, dtype=int32)
+    >>> power = tce.Tensor([[1, 3], [2, 3], [3, 2], [2, 3]])
+    >>> c = tce.pow(a, power)
+    >>> c
+    Tensor(
+    [[  1   8]
+    [  9  64]
+    [125  36]
+    [ 49 512]], requires_grad=False, dtype=int32)
+    """
     t = _ensure_tensor(t)
     power = _ensure_tensor(power)
     if power.requires_grad:
@@ -140,13 +220,54 @@ def pow(t: 'Tensorable', power: 'Tensorable') -> 'Tensor':
 
 
 def rec(t: 'Tensorable') -> 'Tensor':
+    """
+    gets called for operation: 1/t
+    Parameters
+    ----------
+    t: input Tensor
 
+    Returns
+    -------
+    A 'Tensor' that each element is reciprocal of input Tensor
+
+    For examples
+    ------------
+    >>> import  trchime as tce
+    >>> a = tce.Tensor([5,6,7])
+    >>> b = tce.rec(a)
+    >>> b
+    Tensor(
+    [0.2        0.16666667 0.14285714], requires_grad=False, dtype=float64)
+    """
     t = _ensure_tensor(t)
 
     return _rec(t = t)
 
 
 def div(t1: 'Tensorable', t2: 'Tensorable') -> 'Tensor':
+    """
+    gets called for operations: t1 / t2
+    The output Tensor's requires_grad is True when t1's requires_grad is True or t2's requires_grad is True.
+
+    Parameters
+    ----------
+    t1: input Tensor (dividend)
+    t2： input Tensor (divisor)
+
+    Returns
+    -------
+    a 'Tensor' that  is the result of division
+
+    For examples
+    ------------
+    >>> import  trchime as tce
+    >>> a = tce.Tensor([1, 2, 3])
+    >>> b = tce.Tensor([3, 2, 1])
+    >>> c = tce.div(a,b)
+    >>> c
+    Tensor(
+    [0.33333333 1.         3.        ], requires_grad=False, dtype=float64)
+    """
     t1 = _ensure_tensor(t1)
     t2 = _ensure_tensor(t2)
 
@@ -154,6 +275,18 @@ def div(t1: 'Tensorable', t2: 'Tensorable') -> 'Tensor':
 
 
 def neg(t: 'Tensorable') -> 'Tensor':
+    """
+    gets called for operations: t * (-1)
+    The output Tensor's requires_grad is True when t1's requires_grad is True.
+
+    For example
+    -----------
+    >>> import trchime as tce
+    >>> a = tce.Tensor([1,2,3],requires_grad=True)
+    >>> tce.neg(a)
+    Tensor(
+    [-1 -2 -3], requires_grad=True, dtype=int32)
+    """
 
     t = _ensure_tensor(t)
 
@@ -161,6 +294,28 @@ def neg(t: 'Tensorable') -> 'Tensor':
 
 
 def sub(t1: 'Tensorable', t2: 'Tensorable') -> 'Tensor':
+    """
+    gets called for operation: t1 - t2
+    The output Tensor's requires_grad is True when t1's requires_grad is True or t2's requires_grad is True.
+
+    Parameters
+    ----------
+    t1: input Tensor
+    t2: input Tensor
+
+    Returns
+    -------
+    a 'Tensor' that  is the result subtraction
+
+    For examples
+    ------------
+    >>> import trchime as tce
+    >>> a = tce.Tensor([1,2,3], requires_grad = True)
+    >>> b = tce.Tensor([4,5,6], requires_grad = False)
+    >>> tce.sub(a,b)
+    Tensor(
+    [-3 -3 -3], requires_grad=True, dtype=int32)
+    """
     t1 = _ensure_tensor(t1)
     t2 = _ensure_tensor(t2)
 
@@ -172,11 +327,21 @@ def matmul(t1: 'Tensorable', t2: 'Tensorable') -> 'Tensor':
     if t3 = t1@t2, and grad3 is gradient of some function wrt t3, then
     grad1 = grad @ t2.T
     grad2 = t1.T @ grad
-    :param t1:
-    :param t2:
+    :param t1:input tensor
+    :param t2:input tensor
     :return:Tensor(data,
                    requires_grad,
                    depends_on)
+
+    For examples
+    ------------
+    >>> import trchime as tce
+    >>> a = tce.Tensor([[1,2], [3,4]])
+    >>> b = tce.Tensor([[5,7],[6,9]])
+    >>> tce.matmul(a,b)
+    Tensor(
+    [[17 25]
+    [39 57]], requires_grad=False, dtype=int32)
     """
 
     t1 = _ensure_tensor(t1)
@@ -187,10 +352,23 @@ def matmul(t1: 'Tensorable', t2: 'Tensorable') -> 'Tensor':
 
 def dot(t1: 'Tensorable', t2: 'Tensorable') -> 'Tensor':
     """
+    gets called for t1 @ t2
 
-    :param t1:
-    :param t2:
-    :return:
+    :param t1:input tensor
+    :param t2:input tensor
+    :return:Tensor(data,
+                   requires_grad,
+                   depends_on)
+
+    For examples
+    ------------
+    >>> import trchime as tce
+    >>> a = tce.Tensor([[1,2], [3,4]])
+    >>> b = tce.Tensor([[5,7],[6,9]])
+    >>> tce.matmul(a,b)
+    Tensor(
+    [[17 25]
+    [39 57]], requires_grad=False, dtype=int32)
     """
     t1 = _ensure_tensor(t1)
     t2 = _ensure_tensor(t2)
@@ -199,18 +377,6 @@ def dot(t1: 'Tensorable', t2: 'Tensorable') -> 'Tensor':
 
 
 def transpose_T(t: 'Tensorable') -> 'Tensor':
-    """
-    here implement the transpose operation for tensor.
-    if t = [[1], [2], [3]], then, t.T = [[1, 2, 3]]
-    especially, if t = [1, 2, 3], t.T = [1, 2, 3]
-    maually, the gradient of t is the transposed tensor of
-    t.T.
-    :param t:
-    :return:Tensor(data,
-                   requires_grad,
-                   depends_on)
-    """
-
     t = _ensure_tensor(t)
 
     return _transpose_T(t = t)
@@ -220,7 +386,7 @@ def transpose(t: 'Tensorable', *axes) -> 'Tensor':
     """
     a.transpose(*axes)
 
-    Returns a view of the array with axes transposed.
+    Returns a view of the tensor with axes transposed.
 
     For a 1-D array this has no effect, as a transposed vector is simply the
     same vector. To convert a 1-D array into a 2D column vector, an additional
@@ -246,13 +412,13 @@ def transpose(t: 'Tensorable', *axes) -> 'Tensor':
 
     Returns
     -------
-    out : ndarray
+    out : tensor
     View of `a`, with axes suitably permuted.
 
     See Also
     --------
-    ndarray.T : Array property returning the array transposed.
-    ndarray.reshape : Give a new shape to an array without changing its data.
+    tensor.T : Array property returning the tensor transposed.
+    tensor.reshape : Give a new shape to an array without changing its data.
     Examples:
     >>> import trchime as tce
     >>> a = tce.trange(6).reshape((2, 3))
@@ -268,17 +434,16 @@ def transpose(t: 'Tensorable', *axes) -> 'Tensor':
 
     t = _ensure_tensor(t)
 
+    if axes == ():
+        return _transpose_T(t)
+
     return _transpose(t, *axes)
 
 
 def slice(t: 'Tensorable', idxs: slice or tuple, isnew: bool = True) -> 'Tensor':
     """
     key to implement the slice operation.
-
-    :param isnew:
-    :param t:
-    :param idxs:
-    :return:
+    This operator produces a slice of input along multiple axes.
     """
 
     t = _ensure_tensor(t)
@@ -288,12 +453,36 @@ def slice(t: 'Tensorable', idxs: slice or tuple, isnew: bool = True) -> 'Tensor'
 
 def max(t: 'Tensorable', axis=None, keepdims: bool = False, isnew: bool = True) -> 'Tensor':
     """
-    key to implement the max operation.
-    :param isnew:
-    :param keepdims:
-    :param t:
-    :param axis:
-    :return:
+    Computes the maximum of tensor elements over the given axis.
+
+    Parameters
+    ----------
+    t: input Tensor
+    axis: optional, int/list/tuple, if not given, default value is None
+    By default, 'min' will compute the maxmum over all elements of x and return a Tensor with a single element
+    keepdims: optional, bool, if not given, default value is False
+    Whether to reserve the reduced dimension in the output Tensor.
+    The result tensor will have one fewer dimension than the x unless keepdim is true, default value is False.
+    isnew: optional, bool, if not given, default value is True.
+    By default, 'max' will return a 'Tensor' with non-requires-grad
+
+    Returns
+    -------
+    Tensor, results of maxmum on the specified axis of input tensor, it’s data type is the same as input’s Tensor.
+
+    For example
+    -----------
+    >>> import  trchime as tce
+    >>> a = tce.Tensor([[[1, 2], [3,9], [4, 10], [5, 6]],[[7, 8], [6, 1], [9, 4], [1, 7]]], requires_grad = True )
+    >>> b = tce.max(a, axis = 1)
+    >>> b
+    Tensor(
+    [[ 5 10]
+    [ 9  8]], requires_grad=False, dtype=int32)
+    >>> c = tce.max(a, isnew = False)
+    >>> c
+    Tensor(
+    10, requires_grad=True, dtype=int32)
     """
 
 
@@ -304,12 +493,41 @@ def max(t: 'Tensorable', axis=None, keepdims: bool = False, isnew: bool = True) 
 
 def min(t: 'Tensorable', axis=None, keepdims: bool = False, isnew: bool = True) -> 'Tensor':
     """
-    key to implement the min operation.
-    :param isnew:
-    :param keepdims:
-    :param t:
-    :param axis:
-    :return:
+    Computes the minimum of tensor elements over the given axis
+
+    Parameters
+    ----------
+    t: input Tensor
+    axis: optional, int/list/tuple, if not given, default value is None
+    By default, 'min' will compute the minimum over all elements of x and return a Tensor with a single element
+    keepdims: optional, bool, if not given, default value is False
+    Whether to reserve the reduced dimension in the output Tensor.
+    The result tensor will have one fewer dimension than the x unless keepdim is true, default value is False.
+    isnew: optional, bool, if not given, default value is True.
+    By default, 'min' will return a 'Tensor' with non-requires-grad
+
+    Returns
+    -------
+    Tensor, results of minimum on the specified axis of input tensor, it’s data type is the same as input’s Tensor.
+
+    For example
+    -----------
+    >>> import  trchime as tce
+    >>> a = tce.Tensor([[[1, 2], [3,9], [4, 10], [5, 6]],[[7, 8], [6, 1], [9, 4], [1, 7]]], requires_grad = True )
+    >>> b = tce.min(a, axis = 1)
+    >>> b
+    Tensor(
+    [[1 2]
+     [1 1]], requires_grad=False, dtype=int32)
+    >>> c = tce.min(a, axis = 2)
+    >>> c
+    Tensor(
+    [[1 3 4 5]
+    [7 1 4 1]], requires_grad=False, dtype=int32)
+    >>> d = tce.min(a)
+    >>> d
+    Tensor(
+    1, requires_grad=False, dtype=int32)
     """
 
 
@@ -325,10 +543,31 @@ def argmax(t: 'Tensorable', axis=None, isnew: bool = True) -> 'Tensor':
     the argmax(x) is a discontinuouos function. So, the grad_fn
     just return a zero tensor whose shape likes t.
 
-    :param isnew:
-    :param t:
-    :param axis:
-    :return:
+    Parameters
+    ----------
+    self: input Tensor
+    axis: optional, int, if not given,default value is None.
+    By default, the index is into the flattened array, otherwise along the specified axis.
+    Axis to compute indices along. The effective range is [-R, R), where R is x.ndim.
+    isnew: optional, bool, if not given, default value is True
+    By default, argmin will return a 'Tensor' with non-requires-grad.
+
+    Returns
+    -------
+    Tensor of indices into the array. It has the same shape as a.shape with the dimension along axis removed.
+
+    For example
+    -----------
+    >>> import trchime as tce
+    >>> a = tce.Tensor([[1, 3], [5, 2], [3, 6]], requires_grad= True)
+    >>> b = tce.argmax(a, axis=1, isnew = True)
+    >>> b
+    Tensor(
+    [1 0 1], requires_grad=False, dtype=int64)
+    >>> c = tce.argmax(a, axis=0, isnew = True)
+    >>> c
+    Tensor(
+    [1 2], requires_grad=False, dtype=int64)
     """
 
     t = _ensure_tensor(t)
@@ -340,12 +579,33 @@ def argmin(t: 'Tensorable', axis=None, isnew: bool = True) -> 'Tensor':
     """
     key to implement the argmin operation.
     Return arg of the min element in tensor, which is also
-    a 'Tensor" with not-requires_grad.
+    a 'Tensor" with non-requires-grad.
 
-    :param isnew:
-    :param t:
-    :param axis:
-    :return:
+    Parameters
+    ----------
+    self: input Tensor
+    axis: optional, int, if not given,default value is None.
+    By default, the index is into the flattened array, otherwise along the specified axis.
+    Axis to compute indices along. The effective range is [-R, R), where R is x.ndim.
+    isnew: optional, bool, if not given, default value is True
+    By default, argmin will return a 'Tensor' with non-requires-grad.
+
+    Returns
+    -------
+    Array of indices into the array. It has the same shape as a.shape with the dimension along axis removed.
+
+    For example
+    -----------
+    >>> import trchime as tce
+    >>> a = tce.Tensor([[1, 3], [5, 2], [3, 6]], requires_grad= True)
+    >>> b = tce.argmin(a, axis=1, isnew = True)
+    >>> b
+    Tensor(
+    [0 1 0], requires_grad=False, dtype=int64)
+    >>> c = tce.argmin(a, axis=0, isnew = True)
+    >>> c
+    Tensor(
+    [0 1], requires_grad=False, dtype=int64)
     """
 
 
@@ -892,13 +1152,6 @@ def stack(t1: 'Tensorable', t2: 'Tensorable', axis: int = 0,
 
 
 def size(t: 'Tensorable', axis=None, isnew: bool = True) -> 'Tensor':
-    """
-
-    :param isnew:
-    :param t:
-    :param axis:
-    :return:
-    """
     t = _ensure_tensor(t)
 
     return _size(t = t, axis = axis, isnew = isnew)
